@@ -94,9 +94,9 @@ export default function PersonalInfo() {
         rfc: rfc,
       },
     });
-    console.log(data);
-    console.log(loading);
-    console.log(error);
+    //console.log(data);
+    //console.log(loading);
+    //console.log(error);
   };
 
   const UPDATE_INFORMACION = gql`
@@ -123,9 +123,6 @@ export default function PersonalInfo() {
         rfc: info?.rfc === undefined ? "" : rfc,
       },
     });
-    console.log(data);
-    console.log(loading);
-    console.log(error);
   };
 
   const handleSubmit = () => {
@@ -163,13 +160,13 @@ export default function PersonalInfo() {
 
   const direcciones = dataD?.direcciones;
 
-  const [newCalle, setCalle] = useState();
-  const [newNinterior, setNinterior] = useState();
-  const [newNexterior, setNexterior] = useState();
-  const [newColonia, setColonia] = useState();
-  const [newCiudad, setCiudad] = useState();
-  const [newEstado, setEstado] = useState();
-  const [newCp, setCp] = useState();
+  const [newCalle, setCalle] = useState("");
+  const [newNinterior, setNinterior] = useState("");
+  const [newNexterior, setNexterior] = useState("");
+  const [newColonia, setColonia] = useState("");
+  const [newCiudad, setCiudad] = useState("");
+  const [newEstado, setEstado] = useState("");
+  const [newCp, setCp] = useState(null);
   const [factura, setFactura] = useState(false);
 
   const [showDirF, setShowDirF] = useState(false);
@@ -216,27 +213,31 @@ export default function PersonalInfo() {
     }
   `;
 
-  const [createDireccion, { data, loading, error }] =
-    useMutation(CREATE_DIRECCION);
+  const [
+    createDireccion,
+    { data: dataNewDir, loading: loadingNewDir, error: errorNewDir },
+  ] = useMutation(CREATE_DIRECCION);
 
-  const handleSubmitCreateDir = () => {
-    createDireccion({
-      variables: {
-        cliente: user?.user_id,
-        calle: newCalle,
-        ninterior: newNinterior,
-        nexterior: newNexterior,
-        colonia: newColonia,
-        ciudad: newCiudad,
-        estado: newEstado,
-        cp: newCp,
-        facturacion: factura,
-      },
-    });
-    console.log(data);
-    console.log(loading);
-    console.log(error);
-    showNewDirF();
+  const handleSubmitCreateDir = async () => {
+    try {
+      const result = await createDireccion({
+        variables: {
+          cliente: parseInt(user?.user_id),
+          calle: newCalle,
+          ninterior: newNinterior,
+          nexterior: newNexterior,
+          colonia: newColonia,
+          ciudad: newCiudad,
+          estado: newEstado,
+          cp: parseInt(newCp),
+          facturacion: false,
+        },
+      });
+      showNewDirF();
+    } catch (e) {
+      // The 400 Bad Request error will be caught here!
+      console.error(e);
+    }
   };
 
   let deleteInfo = async () => {
@@ -289,7 +290,7 @@ export default function PersonalInfo() {
                 <div className="label" for="nombre">
                   Nombre
                 </div>
-                <div id="nombre">{usuarioG.username}</div>
+                <div id="nombre">{usuarioG?.username}</div>
               </div>
               <div className="form-group-2">
                 <div className="label" for="telefono">

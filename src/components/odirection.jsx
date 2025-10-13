@@ -1,5 +1,7 @@
 import React, { useState, useContext } from "react";
 import AuthContext from "./AuthContext";
+import { gql } from "@apollo/client";
+import { useMutation } from "@apollo/client/react";
 
 export default function ODirection({ direction }) {
   const {
@@ -76,7 +78,7 @@ export default function ODirection({ direction }) {
         cp: $cp
         facturacion: $facturacion
       ) {
-        informacion {
+        direccion {
           calle
           ninterior
           nexterior
@@ -93,30 +95,41 @@ export default function ODirection({ direction }) {
   const [updateDireccion, { data, loading, error }] =
     useMutation(UPDATE_DIRECCION);
 
-  const handleSubmitUpdateDir = () => {
-    updateDireccion({
-      variables: {
-        id: id,
-        calle: newCalle === undefined ? calle : newCalle,
-        ninterior: newNinterior === undefined ? ninterior : newNinterior,
-        nexterior: newNexterior === undefined ? nexterior : newNexterior,
-        colonia: newColonia === undefined ? colonia : newColonia,
-        ciudad: newCiudad === undefined ? ciudad : newCiudad,
-        estado: newEstado === undefined ? estado : newEstado,
-        cp: newCp === undefined ? cp : newCp,
-        facturacion: newFactura === undefined ? facturacion : newFactura,
-      },
-    });
-    console.log(data);
-    console.log(loading);
-    console.log(error);
-    showNewDirF();
-  };
+  const handleSubmitUpdateDir = async () => {
+    const parseToIntOrNull = (value, fallbackValue) => {
+      // Usa el valor original si no ha sido editado
+      const valueToParse = value === undefined ? fallbackValue : value;
 
-  const handleSubmit = () => {
-    handleSubmitUpdateDir();
-    alert("Informacion actualizada!");
-    showEdit();
+      // Intenta convertir a entero
+      const parsed = parseInt(valueToParse);
+
+      // Retorna el número si es válido, de lo contrario retorna null
+      return isNaN(parsed) ? null : parsed;
+    };
+
+    // Lógica para el CP:
+    const cpValue = parseToIntOrNull(newCp, cp);
+
+    try {
+      const result = await updateDireccion({
+        variables: {
+          id: parseInt(id),
+          calle: newCalle === undefined ? calle : newCalle,
+          ninterior: newNinterior === undefined ? ninterior : newNinterior,
+          nexterior: newNexterior === undefined ? nexterior : newNexterior,
+          colonia: newColonia === undefined ? colonia : newColonia,
+          ciudad: newCiudad === undefined ? ciudad : newCiudad,
+          estado: newEstado === undefined ? estado : newEstado,
+          cp: cpValue,
+          facturacion: newFactura === undefined ? facturacion : newFactura,
+        },
+      });
+      showEdit();
+      alert("Información actualizada!");
+    } catch (e) {
+      // The 400 Bad Request error will be caught here!
+      console.error(e);
+    }
   };
 
   return (
@@ -215,7 +228,7 @@ export default function ODirection({ direction }) {
               />
             </div>
             <div className="update-button-cont-2">
-              <button class="update-button2" onClick={handleSubmit}>
+              <button class="update-button2" onClick={handleSubmitUpdateDir}>
                 Actualizar <i class="fa-solid fa-arrows-rotate"></i>
               </button>
               <button class="update-button2" onClick={showEdit}>
