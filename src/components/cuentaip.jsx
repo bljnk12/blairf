@@ -70,9 +70,10 @@ export default function PersonalInfo() {
   };
 
   const CREATE_INFORMACION = gql`
-    mutation createInformacion($id: ID!, $telefono: String, $rfc: String) {
-      createInformacion(id: $id, telefono: $telefono, rfc: $rfc) {
+    mutation createInformacion($cliente: ID!, $telefono: String, $rfc: String) {
+      createInformacion(cliente: $cliente, telefono: $telefono, rfc: $rfc) {
         informacion {
+          cliente
           telefono
           rfc
         }
@@ -189,7 +190,7 @@ export default function PersonalInfo() {
       $cp: Int
       $facturacion: Boolean
     ) {
-      updateDireccion(
+      createDireccion(
         cliente: $cliente
         calle: $calle
         ninterior: $ninterior
