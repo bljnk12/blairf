@@ -14,48 +14,54 @@ export default function PersonalInfo() {
     navigate("/");
   };
 
-  const [clientes, setClientes] = useState([]);
-  const [usuario, setUsuario] = useState();
+  //-----------------------------------------
+  const GET_USUARIO = gql`
+    query GetUsuario($id: ID!) {
+      usuario(id: $id) {
+        id
+        username
+      }
+    }
+  `;
 
-  useEffect(() => {
-    getClientes();
-  }, []);
+  const {
+    loading: loadingU,
+    error: errorU,
+    data: dataU,
+  } = useQuery(GET_USUARIO, {
+    variables: {
+      id: user?.user_id,
+    },
+  });
 
-  let getClientes = async () => {
-    let response = await fetch(
-      "http://localhost:8000/blairfoodsb/user/create/"
-    );
-    let data = await response.json();
-    setClientes(data);
-    // console.log(data)
+  const usuarioG = dataU?.usuario;
+
+  const GET_INFORMACION = gql`
+    query GetInformacion($cliente: ID!) {
+      informacion(cliente: $cliente) {
+        rfc
+        telefono
+      }
+    }
+  `;
+
+  const {
+    loading: loadingI,
+    error: errorI,
+    data: dataI,
+  } = useQuery(GET_INFORMACION, {
+    variables: {
+      cliente: user?.user_id,
+    },
+  });
+
+  const info = dataI?.informacion[0];
+
+  const showData = () => {
+    console.log(user?.user_id);
+    console.log(usuarioG.username);
   };
-
-  useEffect(() => {
-    const usuario = clientes.find((usr) => usr.id === user?.user_id);
-    setUsuario(usuario);
-  }, [clientes]);
-
-  const [usuarios, setUsuarios] = useState([]);
-
-  useEffect(() => {
-    getUsuarios();
-  }, []);
-
-  let getUsuarios = async () => {
-    let response = await fetch(
-      "http://localhost:8000/blairfoodsb/userinfo/create/"
-    );
-    let data = await response.json();
-
-    setUsuarios(data);
-  };
-
-  const [info, setInfo] = useState();
-
-  useEffect(() => {
-    const info = usuarios.find((usr) => usr.cliente === user?.user_id);
-    setInfo(info);
-  }, [usuarios]);
+  //-----------------------------------------
 
   let updateInfo = async () => {
     fetch(`http://localhost:8000/blairfoodsb/userinfo/${info?.id}/`, {
@@ -173,10 +179,6 @@ export default function PersonalInfo() {
 
   const direcciones = dataD?.direcciones;
 
-  const showData = () => {
-    console.log(user?.user_id);
-    console.log(direcciones);
-  };
   //-----------------------------------------
 
   let deleteInfo = async () => {
@@ -225,7 +227,7 @@ export default function PersonalInfo() {
                 <div className="label" for="nombre">
                   Nombre
                 </div>
-                <div id="nombre">{usuario?.username}</div>
+                <div id="nombre">{usuarioG.username}</div>
               </div>
               <div className="form-group-2">
                 <div className="label" for="telefono">
@@ -243,7 +245,7 @@ export default function PersonalInfo() {
                 <div className="label" for="email">
                   Correo
                 </div>
-                <div id="email">{usuario?.email}</div>
+                <div id="email">{usuarioG?.email}</div>
               </div>
               <div className="form-group-4">
                 <div className="label" for="rfc">

@@ -28,26 +28,27 @@ export default function Account() {
     setShowLogin(false);
   }
 
-  const [clientes, setClientes] = useState([]);
-  const [usuario, setUsuario] = useState();
+  //-----------------------------------------
+  const GET_USUARIO = gql`
+    query GetUsuario($id: ID!) {
+      usuario(id: $id) {
+        id
+        username
+      }
+    }
+  `;
 
-  useEffect(() => {
-    getClientes();
-  }, []);
+  const {
+    loading: loadingU,
+    error: errorU,
+    data: dataU,
+  } = useQuery(GET_USUARIO, {
+    variables: {
+      id: user?.user_id,
+    },
+  });
 
-  let getClientes = async () => {
-    let response = await fetch(
-      "http://localhost:8000/blairfoodsb/user/create/"
-    );
-    let data = await response.json();
-    setClientes(data);
-    // console.log(data)
-  };
-
-  useEffect(() => {
-    const usuario = clientes.find((usr) => usr.id === user?.user_id);
-    setUsuario(usuario);
-  }, [clientes]);
+  const usuarioG = dataU?.usuario;
 
   // const showInfo = () => {
   //     console.log(clientes)
@@ -142,7 +143,7 @@ export default function Account() {
         </div>
 
         <div className="contenido-mc">
-          <h2 className="cuenta-username">{usuario?.username}</h2>
+          <h2 className="cuenta-username">{usuarioG?.username}</h2>
           <div className="cuenta-options">
             <div className="aviso-priv-cont">
               <Link className="avisopriv-link" to="/avisoprivacidad">
