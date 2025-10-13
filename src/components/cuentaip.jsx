@@ -14,7 +14,6 @@ export default function PersonalInfo() {
     navigate("/");
   };
 
-  //-----------------------------------------
   const GET_USUARIO = gql`
     query GetUsuario($id: ID!) {
       usuario(id: $id) {
@@ -57,11 +56,9 @@ export default function PersonalInfo() {
 
   const info = dataI?.informacion[0];
 
-  const showData = () => {
-    console.log(user?.user_id);
-    console.log(usuarioG.username);
-  };
-  //-----------------------------------------
+  //------------------------------------
+
+  //------------------------------------
 
   let updateInfo = async () => {
     fetch(`http://localhost:8000/blairfoodsb/userinfo/${info?.id}/`, {

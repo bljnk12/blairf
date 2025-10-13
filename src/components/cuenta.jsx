@@ -28,7 +28,6 @@ export default function Account() {
     setShowLogin(false);
   }
 
-  //-----------------------------------------
   const GET_USUARIO = gql`
     query GetUsuario($id: ID!) {
       usuario(id: $id) {
