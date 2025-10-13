@@ -38,8 +38,8 @@ export default function PersonalInfo() {
   const GET_INFORMACION = gql`
     query GetInformacion($cliente: ID!) {
       informacion(cliente: $cliente) {
-        rfc
         telefono
+        rfc
       }
     }
   `;
@@ -56,45 +56,10 @@ export default function PersonalInfo() {
 
   const info = dataI?.informacion[0];
 
-  //------------------------------------
-
-  //------------------------------------
-
-  let updateInfo = async () => {
-    fetch(`http://localhost:8000/blairfoodsb/userinfo/${info?.id}/`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(UpInfo),
-    });
-  };
-
-  let newInfo = async () => {
-    fetch("http://localhost:8000/blairfoodsb/userinfo/create/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(NewInfo),
-    });
-  };
-
   const [telefono, setTelefono] = useState(
     info?.telefono ? "" : info?.telefono
   );
   const [rfc, setRfc] = useState(info?.rfc ? "" : info?.rfc);
-
-  const UpInfo = {
-    telefono: telefono === undefined ? info?.telefono : telefono,
-    rfc: rfc === undefined ? info?.rfc : rfc,
-  };
-
-  const NewInfo = {
-    cliente: user?.user_id,
-    telefono: telefono === undefined ? "" : telefono,
-    rfc: rfc === undefined ? "" : rfc,
-  };
 
   let handleChangeTelefono = (value) => {
     setTelefono(value);
@@ -104,54 +69,75 @@ export default function PersonalInfo() {
     setRfc(value);
   };
 
+  const CREATE_INFORMACION = gql`
+    mutation createInformacion($id: ID!, $telefono: String, $rfc: String) {
+      createInformacion(id: $id, telefono: $telefono, rfc: $rfc) {
+        informacion {
+          telefono
+          rfc
+        }
+      }
+    }
+  `;
+
+  const [
+    createInformacion,
+    { data: dataNewInfo, loading: loadingNewInfo, error: errorNewInfo },
+  ] = useMutation(CREATE_INFORMACION);
+
+  const handleSubmitCreateInfo = () => {
+    createInformacion({
+      variables: {
+        cliente: user?.user_id,
+        telefono: telefono,
+        rfc: rfc,
+      },
+    });
+    console.log(data);
+    console.log(loading);
+    console.log(error);
+  };
+
+  const UPDATE_INFORMACION = gql`
+    mutation updateInformacion($id: ID!, $telefono: String, $rfc: String) {
+      updateInformacion(id: $id, telefono: $telefono, rfc: $rfc) {
+        informacion {
+          telefono
+          rfc
+        }
+      }
+    }
+  `;
+
+  const [
+    updateInformacion,
+    { data: dataInfo, loading: loadingInfo, error: errorInfo },
+  ] = useMutation(UPDATE_INFORMACION);
+
+  const handleSubmitUpdateInfo = () => {
+    updateInformacion({
+      variables: {
+        id: info?.id,
+        telefono: info?.telefono === undefined ? "" : telefono,
+        rfc: info?.rfc === undefined ? "" : rfc,
+      },
+    });
+    console.log(data);
+    console.log(loading);
+    console.log(error);
+  };
+
   const handleSubmit = () => {
     if (info === undefined) {
-      newInfo();
+      handleSubmitCreateInfo();
       navigate("/");
     }
     if (info !== undefined) {
-      updateInfo();
+      handleSubmitUpdateInfo();
     }
     alert("Informacion actualizada!");
   };
 
-  const [newCalle, setCalle] = useState();
-  const [newNinterior, setNinterior] = useState();
-  const [newNexterior, setNexterior] = useState();
-  const [newColonia, setColonia] = useState();
-  const [newCiudad, setCiudad] = useState();
-  const [newEstado, setEstado] = useState();
-  const [newCp, setCp] = useState();
-
-  const [showDirF, setShowDirF] = useState(false);
-
-  const showNewDirF = () => {
-    setShowDirF(!showDirF);
-  };
-
-  const NewDirection = {
-    cliente: user?.user_id,
-    calle: newCalle === undefined ? "" : newCalle,
-    ninterior: newNinterior === undefined ? "" : newNinterior,
-    nexterior: newNexterior === undefined ? "" : newNexterior,
-    colonia: newColonia === undefined ? "" : newColonia,
-    ciudad: newCiudad === undefined ? "" : newCiudad,
-    estado: newEstado === undefined ? "" : newEstado,
-    cp: newCp === undefined ? "" : newCp,
-  };
-
-  let newDir = async () => {
-    fetch("http://localhost:8000/blairfoodsb/userdirection/create/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(NewDirection),
-    });
-    showNewDirF();
-  };
-
-  //-----------------------------------------
   const GET_DIRECCIONES = gql`
     query {
       direcciones {
@@ -176,7 +162,81 @@ export default function PersonalInfo() {
 
   const direcciones = dataD?.direcciones;
 
-  //-----------------------------------------
+  const [newCalle, setCalle] = useState();
+  const [newNinterior, setNinterior] = useState();
+  const [newNexterior, setNexterior] = useState();
+  const [newColonia, setColonia] = useState();
+  const [newCiudad, setCiudad] = useState();
+  const [newEstado, setEstado] = useState();
+  const [newCp, setCp] = useState();
+  const [factura, setFactura] = useState(false);
+
+  const [showDirF, setShowDirF] = useState(false);
+
+  const showNewDirF = () => {
+    setShowDirF(!showDirF);
+  };
+
+  const CREATE_DIRECCION = gql`
+    mutation createDireccion(
+      $cliente: ID!
+      $calle: String
+      $ninterior: String
+      $nexterior: String
+      $colonia: String
+      $ciudad: String
+      $estado: String
+      $cp: Int
+      $facturacion: Boolean
+    ) {
+      updateDireccion(
+        cliente: $cliente
+        calle: $calle
+        ninterior: $ninterior
+        nexterior: $nexterior
+        colonia: $colonia
+        ciudad: $ciudad
+        estado: $estado
+        cp: $cp
+        facturacion: $facturacion
+      ) {
+        direccion {
+          id
+          calle
+          ninterior
+          nexterior
+          colonia
+          ciudad
+          estado
+          cp
+          facturacion
+        }
+      }
+    }
+  `;
+
+  const [createDireccion, { data, loading, error }] =
+    useMutation(CREATE_DIRECCION);
+
+  const handleSubmitCreateDir = () => {
+    createDireccion({
+      variables: {
+        cliente: user?.user_id,
+        calle: newCalle,
+        ninterior: newNinterior,
+        nexterior: newNexterior,
+        colonia: newColonia,
+        ciudad: newCiudad,
+        estado: newEstado,
+        cp: newCp,
+        facturacion: factura,
+      },
+    });
+    console.log(data);
+    console.log(loading);
+    console.log(error);
+    showNewDirF();
+  };
 
   let deleteInfo = async () => {
     fetch(`http://localhost:8000/blairfoodsb/userinfo/${info?.id}/`, {
@@ -212,6 +272,10 @@ export default function PersonalInfo() {
 
   const closeDeleteAdvice = () => {
     setShowDelAd(false);
+  };
+
+  const showData = () => {
+    console.log("");
   };
 
   return (
@@ -363,7 +427,7 @@ export default function PersonalInfo() {
               />
             </div>
             <div className="update-button-cont-2">
-              <button class="update-button2" onClick={newDir}>
+              <button class="update-button2" onClick={handleSubmitCreateDir}>
                 Guardar
               </button>
               <button class="update-button2" onClick={showNewDirF}>

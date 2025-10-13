@@ -2,8 +2,17 @@ import React, { useState, useContext } from "react";
 import AuthContext from "./AuthContext";
 
 export default function ODirection({ direction }) {
-  const { id, calle, ninterior, nexterior, colonia, ciudad, estado, cp } =
-    direction;
+  const {
+    id,
+    calle,
+    ninterior,
+    nexterior,
+    colonia,
+    ciudad,
+    estado,
+    cp,
+    facturacion,
+  } = direction;
 
   const { user } = useContext(AuthContext);
 
@@ -13,16 +22,6 @@ export default function ODirection({ direction }) {
     setEditar(!editar);
   };
 
-  let updateDir = async () => {
-    fetch(`http://localhost:8000/blairfoodsb/userdirection/${id}/`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(UpDir),
-    });
-  };
-
   const [newCalle, setCalle] = useState(calle);
   const [newNinterior, setNinterior] = useState(ninterior);
   const [newNexterior, setNexterior] = useState(nexterior);
@@ -30,16 +29,7 @@ export default function ODirection({ direction }) {
   const [newCiudad, setCiudad] = useState(ciudad);
   const [newEstado, setEstado] = useState(estado);
   const [newCp, setCp] = useState(cp);
-
-  const UpDir = {
-    calle: newCalle === undefined ? calle : newCalle,
-    ninterior: newNinterior === undefined ? ninterior : newNinterior,
-    nexterior: newNexterior === undefined ? nexterior : newNexterior,
-    colonia: newColonia === undefined ? colonia : newColonia,
-    ciudad: newCiudad === undefined ? ciudad : newCiudad,
-    estado: newEstado === undefined ? estado : newEstado,
-    cp: newCp === undefined ? cp : newCp,
-  };
+  const [newFactura, setFactura] = useState(facturacion);
 
   let handleChangeCalle = (value) => {
     setCalle(value);
@@ -63,8 +53,68 @@ export default function ODirection({ direction }) {
     setCp(value);
   };
 
+  const UPDATE_DIRECCION = gql`
+    mutation updateDireccion(
+      $id: ID!
+      $calle: String
+      $ninterior: String
+      $nexterior: String
+      $colonia: String
+      $ciudad: String
+      $estado: String
+      $cp: Int
+      $facturacion: Boolean
+    ) {
+      updateDireccion(
+        id: $id
+        calle: $calle
+        ninterior: $ninterior
+        nexterior: $nexterior
+        colonia: $colonia
+        ciudad: $ciudad
+        estado: $estado
+        cp: $cp
+        facturacion: $facturacion
+      ) {
+        informacion {
+          calle
+          ninterior
+          nexterior
+          colonia
+          ciudad
+          estado
+          cp
+          facturacion
+        }
+      }
+    }
+  `;
+
+  const [updateDireccion, { data, loading, error }] =
+    useMutation(UPDATE_DIRECCION);
+
+  const handleSubmitUpdateDir = () => {
+    updateDireccion({
+      variables: {
+        id: id,
+        calle: newCalle === undefined ? calle : newCalle,
+        ninterior: newNinterior === undefined ? ninterior : newNinterior,
+        nexterior: newNexterior === undefined ? nexterior : newNexterior,
+        colonia: newColonia === undefined ? colonia : newColonia,
+        ciudad: newCiudad === undefined ? ciudad : newCiudad,
+        estado: newEstado === undefined ? estado : newEstado,
+        cp: newCp === undefined ? cp : newCp,
+        facturacion: newFactura === undefined ? facturacion : newFactura,
+      },
+    });
+    console.log(data);
+    console.log(loading);
+    console.log(error);
+    showNewDirF();
+  };
+
   const handleSubmit = () => {
-    updateDir();
+    handleSubmitUpdateDir();
     alert("Informacion actualizada!");
     showEdit();
   };
