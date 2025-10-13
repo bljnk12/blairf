@@ -1,0 +1,207 @@
+import { useEffect, useState, useContext } from "react";
+import { jsPDF } from "jspdf";
+import { ProductContext } from "./ProductContext";
+import logo from "./media/fulllogo.png";
+import ItemPA from "./itemPa";
+import { autoTable } from "jspdf-autotable";
+
+const OrderPA = ({ orden }) => {
+  const {
+    ordenId,
+    clienteNombre,
+    total,
+    dia,
+    envio,
+    pago,
+    factura,
+    direccionEnvio,
+    estatus,
+    completa,
+  } = orden;
+
+  const [facturacion, setFacturacion] = useState("");
+
+  const mostrarFactura = () => {
+    if (factura === true) {
+      setFacturacion("si");
+    } else {
+      setFacturacion("no");
+    }
+  };
+
+  useEffect(() => {
+    mostrarFactura();
+  }, [facturacion]);
+
+  const [items, setItems] = useState([]);
+  const [orderitems, setOrderItems] = useState();
+
+  useEffect(() => {
+    const Items = () => {
+      getItems();
+    };
+    Items();
+  }, []);
+
+  let getItems = async () => {
+    let response = await fetch(
+      "http://localhost:8000/blairfoodsb/item/create/"
+    );
+    let data = await response.json();
+    setItems(data);
+    // console.log(data)
+  };
+
+  useEffect(() => {
+    const itemsDelUsuario = items?.filter((item) => item.ordenId === ordenId);
+    setOrderItems(itemsDelUsuario);
+  }, [items]);
+
+  const [showTest, setShowTest] = useState(false);
+
+  const showTestBtn = () => {
+    setShowTest(!showTest);
+  };
+
+  function closeTest() {
+    setShowTest(false);
+  }
+
+  //-----------PDF------------//
+
+  const { products } = useContext(ProductContext);
+
+  const doc = new jsPDF();
+
+  let info = [];
+
+  orderitems?.forEach((element, index, array) => {
+    const nombres = products?.find((item) => {
+      return item.id === element.producto;
+    });
+    info.push([
+      nombres?.nombre,
+      element.unidad,
+      element.precio,
+      element.cantidad,
+    ]);
+  });
+
+  let opciones = {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+  };
+  let fecha = new Date(dia)
+    .toLocaleDateString("es", opciones)
+    .replace(/ /g, "-")
+    .replace(".", "")
+    .replace(/-([a-z])/, function (x) {
+      return "-" + x[1].toUpperCase();
+    });
+  console.log(fecha);
+
+  const print = () => {
+    doc.addImage(logo, 150, 5, 48, 20);
+    doc.setFontSize(15);
+    doc.text("Recibo", 10, 20);
+    doc.setFontSize(12);
+    doc.text(`Fecha: ${fecha} `, 10, 30);
+    doc.text("Blairfoods", 10, 40);
+    doc.text("billing@blairfoods.com", 10, 47);
+    doc.text(`Orden id: ${ordenId} `, 10, 57);
+    doc.text(`Cliente: ${clienteNombre} `, 10, 64);
+    doc.text(`Dirección: ${direccionEnvio} `, 10, 71);
+    doc.text(`Total: $${total} `, 10, 78);
+    doc.text(`Estatus: ${estatus} `, 10, 85);
+    doc.text("Articulos", 95, 95);
+    doc.autoTable({
+      theme: "striped",
+      headStyles: {
+        fillColor: [70, 85, 108], // Darker gray for the header (optional)
+        textColor: 255, // White text for the header
+      },
+      startX: 10,
+      startY: 102,
+      head: [["Producto", "Unidad", "Precio", "Cantidad"]],
+      body: info,
+    });
+    doc.save(`${ordenId}.pdf`);
+  };
+
+  //-----------PDF------------//
+
+  return (
+    <div className="ordenes-cliente-pa">
+      <div className="logo-pa">
+        <img src={logo} alt="Logo de la empresa" width={220} class="logo" />
+      </div>
+      <div className="ordenes-detail-pa">
+        <div className="ordenes-detail-lc-pa">
+          <div className="oda-1">
+            <div className="odt">Orden id: </div>
+            <div className="odtd" id="oda-1">
+              {ordenId}
+            </div>
+          </div>
+          <div className="oda-2">
+            <div className="odt">Cliente: </div>
+            <div className="odtd" id="oda-2">
+              {clienteNombre}
+            </div>
+          </div>
+          <div className="oda-2">
+            <div className="odt">Dirección: </div>
+            <div className="odtd" id="oda-2">
+              {direccionEnvio}
+            </div>
+          </div>
+          <div className="oda-3">
+            <div className="odt">Fecha: </div>
+            <div className="odtd" id="oda-3">
+              {fecha}
+            </div>
+          </div>
+          <div className="oda-4">
+            <div className="odt">Total: </div>
+            <div className="odtd" id="oda-4">
+              ${total}
+            </div>
+          </div>
+          <div className="oda-5">
+            <div className="odt">Estatus: </div>
+            <div className="odtd" id="oda-5">
+              {estatus}
+            </div>
+          </div>
+        </div>
+        <div className="ordenes-detail-rc-pa">
+          <div className="oda-6">
+            <button onClick={print}>
+              <i class="fa-solid fa-print"></i>Imprimir
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="orden-detail-products-pa">
+        <div id="odp-table-pa">
+          <div className="title-pa">Articulos</div>
+          <div className="title-oi-pa">
+            <div className="toi-1">Producto</div>
+            <div className="toi-2">Unidad</div>
+            <div className="toi-3">Precio</div>
+            <div className="toi-4">Cantidad</div>
+          </div>
+          {orderitems?.map((item) => {
+            return <ItemPA item={item} key={item.id} />;
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default OrderPA;
