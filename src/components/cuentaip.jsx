@@ -151,12 +151,15 @@ export default function PersonalInfo() {
   };
 
   const handleSubmit = () => {
-    if (info) {
-      handleSubmitUpdateInfo();
+    if (user) {
+      if (info) {
+        handleSubmitUpdateInfo();
+      } else {
+        handleSubmitCreateInfo();
+      }
     } else {
-      handleSubmitCreateInfo();
+      alert("Inicia sesión por favor!");
     }
-    alert("Informacion actualizada!");
   };
 
   const GET_DIRECCION = gql`
@@ -270,25 +273,29 @@ export default function PersonalInfo() {
   });
 
   const handleSubmitCreateDir = async () => {
-    try {
-      const result = await createDireccion({
-        variables: {
-          cliente: usuario,
-          calle: newCalle,
-          ninterior: newNinterior,
-          nexterior: newNexterior,
-          colonia: newColonia,
-          ciudad: newCiudad,
-          estado: newEstado,
-          cp: parseInt(newCp),
-          facturacion: false,
-        },
-      });
-    } catch (e) {
-      // The 400 Bad Request error will be caught here!
-      //console.error(e);
+    if (user) {
+      try {
+        const result = await createDireccion({
+          variables: {
+            cliente: usuario,
+            calle: newCalle,
+            ninterior: newNinterior,
+            nexterior: newNexterior,
+            colonia: newColonia,
+            ciudad: newCiudad,
+            estado: newEstado,
+            cp: parseInt(newCp),
+            facturacion: false,
+          },
+        });
+      } catch (e) {
+        // The 400 Bad Request error will be caught here!
+        //console.error(e);
+      }
+      showNewDirF();
+    } else {
+      alert("Inicia sesión por favor!");
     }
-    showNewDirF();
   };
 
   let deleteInfo = async () => {
