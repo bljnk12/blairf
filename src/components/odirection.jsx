@@ -33,28 +33,6 @@ export default function ODirection({ direction }) {
   const [newCp, setCp] = useState(cp);
   const [newFactura, setFactura] = useState(facturacion);
 
-  let handleChangeCalle = (value) => {
-    setCalle(value);
-  };
-  let handleChangeNinterior = (value) => {
-    setNinterior(value);
-  };
-  let handleChangeNexterior = (value) => {
-    setNexterior(value);
-  };
-  let handleChangeColonia = (value) => {
-    setColonia(value);
-  };
-  let handleChangeCiudad = (value) => {
-    setCiudad(value);
-  };
-  let handleChangeEstado = (value) => {
-    setEstado(value);
-  };
-  let handleChangeCp = (value) => {
-    setCp(value);
-  };
-
   const UPDATE_DIRECCION = gql`
     mutation updateDireccion(
       $id: ID!
@@ -79,6 +57,7 @@ export default function ODirection({ direction }) {
         facturacion: $facturacion
       ) {
         direccion {
+          id
           calle
           ninterior
           nexterior
@@ -110,26 +89,28 @@ export default function ODirection({ direction }) {
     // Lógica para el CP:
     const cpValue = parseToIntOrNull(newCp, cp);
 
+    const idn = parseInt(id);
+
     try {
       const result = await updateDireccion({
         variables: {
-          id: parseInt(id),
-          calle: newCalle === undefined ? calle : newCalle,
-          ninterior: newNinterior === undefined ? ninterior : newNinterior,
-          nexterior: newNexterior === undefined ? nexterior : newNexterior,
-          colonia: newColonia === undefined ? colonia : newColonia,
-          ciudad: newCiudad === undefined ? ciudad : newCiudad,
-          estado: newEstado === undefined ? estado : newEstado,
-          cp: cpValue,
-          facturacion: newFactura === undefined ? facturacion : newFactura,
+          id: idn,
+          calle: newCalle,
+          ninterior: newNinterior,
+          nexterior: newNexterior,
+          colonia: newColonia,
+          ciudad: newCiudad,
+          estado: newEstado,
+          cp: isNaN(cpValue) ? null : cpValue,
+          facturacion: newFactura,
         },
       });
-      showEdit();
       alert("Información actualizada!");
     } catch (e) {
       // The 400 Bad Request error will be caught here!
-      console.error(e);
+      //console.error(e);
     }
+    showEdit();
   };
 
   return (
@@ -154,9 +135,9 @@ export default function ODirection({ direction }) {
               <input
                 type="text"
                 id="calle"
-                defaultValue={calle}
+                value={newCalle}
                 onChange={(e) => {
-                  handleChangeCalle(e.target.value);
+                  setCalle(e.target.value);
                 }}
               />
             </div>
@@ -165,9 +146,9 @@ export default function ODirection({ direction }) {
               <input
                 type="text"
                 id="ninterior"
-                defaultValue={ninterior}
+                value={newNinterior}
                 onChange={(e) => {
-                  handleChangeNinterior(e.target.value);
+                  setNinterior(e.target.value);
                 }}
               />
             </div>
@@ -176,9 +157,9 @@ export default function ODirection({ direction }) {
               <input
                 type="text"
                 id="nexterior"
-                defaultValue={nexterior}
+                value={newNexterior}
                 onChange={(e) => {
-                  handleChangeNexterior(e.target.value);
+                  setNexterior(e.target.value);
                 }}
               />
             </div>
@@ -187,9 +168,9 @@ export default function ODirection({ direction }) {
               <input
                 type="text"
                 id="colonia"
-                defaultValue={colonia}
+                value={newColonia}
                 onChange={(e) => {
-                  handleChangeColonia(e.target.value);
+                  setColonia(e.target.value);
                 }}
               />
             </div>
@@ -198,9 +179,9 @@ export default function ODirection({ direction }) {
               <input
                 type="text"
                 id="ciudad"
-                defaultValue={ciudad}
+                value={newCiudad}
                 onChange={(e) => {
-                  handleChangeCiudad(e.target.value);
+                  setCiudad(e.target.value);
                 }}
               />
             </div>
@@ -209,9 +190,9 @@ export default function ODirection({ direction }) {
               <input
                 type="text"
                 id="estado"
-                defaultValue={estado}
+                value={newEstado}
                 onChange={(e) => {
-                  handleChangeEstado(e.target.value);
+                  setEstado(e.target.value);
                 }}
               />
             </div>
@@ -221,9 +202,9 @@ export default function ODirection({ direction }) {
               </div>
               <input
                 type="text"
-                defaultValue={cp}
+                value={newCp}
                 onChange={(e) => {
-                  handleChangeCp(e.target.value);
+                  setCp(e.target.value);
                 }}
               />
             </div>

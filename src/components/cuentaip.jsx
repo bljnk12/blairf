@@ -8,6 +8,8 @@ import { useQuery, useMutation } from "@apollo/client/react";
 export default function PersonalInfo() {
   const { user, logoutUser } = useContext(AuthContext);
 
+  const usuario = parseInt(user?.user_id);
+
   const navigate = useNavigate();
 
   const goHome = () => {
@@ -29,7 +31,7 @@ export default function PersonalInfo() {
     data: dataU,
   } = useQuery(GET_USUARIO, {
     variables: {
-      id: user?.user_id,
+      id: usuario,
     },
   });
 
@@ -38,6 +40,7 @@ export default function PersonalInfo() {
   const GET_INFORMACION = gql`
     query GetInformacion($cliente: ID!) {
       informacion(cliente: $cliente) {
+        id
         telefono
         rfc
       }
@@ -50,27 +53,24 @@ export default function PersonalInfo() {
     data: dataI,
   } = useQuery(GET_INFORMACION, {
     variables: {
-      cliente: user?.user_id,
+      cliente: usuario,
     },
   });
 
   const info = dataI?.informacion[0];
 
-  const [telefono, setTelefono] = useState(
-    info?.telefono ? "" : info?.telefono
-  );
-  const [rfc, setRfc] = useState(info?.rfc ? "" : info?.rfc);
+  const [telefono, setTelefono] = useState(null);
+  const [rfc, setRfc] = useState("");
 
-  let handleChangeTelefono = (value) => {
-    setTelefono(value);
-  };
-
-  let handleChangeRfc = (value) => {
-    setRfc(value);
-  };
+  useEffect(() => {
+    if (info) {
+      setTelefono(info.telefono || null);
+      setRfc(info.rfc || "");
+    }
+  }, [info]); // Re-run when 'info' changes
 
   const CREATE_INFORMACION = gql`
-    mutation createInformacion($cliente: ID!, $telefono: String, $rfc: String) {
+    mutation createInformacion($cliente: ID!, $telefono: Int, $rfc: String) {
       createInformacion(cliente: $cliente, telefono: $telefono, rfc: $rfc) {
         informacion {
           cliente
@@ -89,7 +89,7 @@ export default function PersonalInfo() {
   const handleSubmitCreateInfo = () => {
     createInformacion({
       variables: {
-        cliente: user?.user_id,
+        cliente: usuario,
         telefono: telefono,
         rfc: rfc,
       },
@@ -100,9 +100,10 @@ export default function PersonalInfo() {
   };
 
   const UPDATE_INFORMACION = gql`
-    mutation updateInformacion($id: ID!, $telefono: String, $rfc: String) {
+    mutation updateInformacion($id: ID!, $telefono: Int, $rfc: String) {
       updateInformacion(id: $id, telefono: $telefono, rfc: $rfc) {
         informacion {
+          id
           telefono
           rfc
         }
@@ -113,14 +114,24 @@ export default function PersonalInfo() {
   const [
     updateInformacion,
     { data: dataInfo, loading: loadingInfo, error: errorInfo },
-  ] = useMutation(UPDATE_INFORMACION);
+  ] = useMutation(UPDATE_INFORMACION, {
+    refetchQueries: [
+      {
+        query: GET_INFORMACION,
+        variables: { cliente: usuario },
+      },
+      "GetInformacion",
+    ],
+  });
 
   const handleSubmitUpdateInfo = () => {
+    const id = parseInt(info?.id);
+    const tel = parseInt(telefono);
     updateInformacion({
       variables: {
-        id: info?.id,
-        telefono: info?.telefono === undefined ? "" : telefono,
-        rfc: info?.rfc === undefined ? "" : rfc,
+        id: id,
+        telefono: tel,
+        rfc: rfc,
       },
     });
   };
@@ -128,7 +139,6 @@ export default function PersonalInfo() {
   const handleSubmit = () => {
     if (info === undefined) {
       handleSubmitCreateInfo();
-      navigate("/");
     }
     if (info !== undefined) {
       handleSubmitUpdateInfo();
@@ -136,9 +146,9 @@ export default function PersonalInfo() {
     alert("Informacion actualizada!");
   };
 
-  const GET_DIRECCIONES = gql`
-    query {
-      direcciones {
+  const GET_DIRECCION = gql`
+    query GetDireccion($cliente: ID!) {
+      direccion(cliente: $cliente) {
         id
         calle
         ninterior
@@ -156,9 +166,13 @@ export default function PersonalInfo() {
     loading: loadingD,
     error: errorD,
     data: dataD,
-  } = useQuery(GET_DIRECCIONES);
+  } = useQuery(GET_DIRECCION, {
+    variables: {
+      cliente: usuario,
+    },
+  });
 
-  const direcciones = dataD?.direcciones;
+  const direcciones = dataD?.direccion;
 
   const [newCalle, setCalle] = useState("");
   const [newNinterior, setNinterior] = useState("");
@@ -216,13 +230,37 @@ export default function PersonalInfo() {
   const [
     createDireccion,
     { data: dataNewDir, loading: loadingNewDir, error: errorNewDir },
-  ] = useMutation(CREATE_DIRECCION);
+  ] = useMutation(CREATE_DIRECCION, {
+    update(
+      cache,
+      {
+        data: {
+          createDireccion: { direccion: nuevaDireccion },
+        },
+      }
+    ) {
+      const existingDirecciones = cache.readQuery({
+        query: GET_DIRECCION,
+        variables: { cliente: usuario },
+      });
+
+      if (existingDirecciones && nuevaDireccion) {
+        cache.writeQuery({
+          query: GET_DIRECCION,
+          variables: { cliente: usuario },
+          data: {
+            direccion: [...existingDirecciones.direccion, nuevaDireccion],
+          },
+        });
+      }
+    },
+  });
 
   const handleSubmitCreateDir = async () => {
     try {
       const result = await createDireccion({
         variables: {
-          cliente: parseInt(user?.user_id),
+          cliente: usuario,
           calle: newCalle,
           ninterior: newNinterior,
           nexterior: newNexterior,
@@ -233,11 +271,11 @@ export default function PersonalInfo() {
           facturacion: false,
         },
       });
-      showNewDirF();
     } catch (e) {
       // The 400 Bad Request error will be caught here!
-      console.error(e);
+      //console.error(e);
     }
+    showNewDirF();
   };
 
   let deleteInfo = async () => {
@@ -277,7 +315,8 @@ export default function PersonalInfo() {
   };
 
   const showData = () => {
-    console.log("");
+    console.log(usuario);
+    console.log(dataD);
   };
 
   return (
@@ -297,10 +336,10 @@ export default function PersonalInfo() {
                   Teléfono
                 </div>
                 <input
-                  type="text"
-                  defaultValue={info?.telefono}
+                  type="number"
+                  value={telefono}
                   onChange={(e) => {
-                    handleChangeTelefono(e.target.value);
+                    setTelefono(e.target.value);
                   }}
                 />
               </div>
@@ -316,9 +355,9 @@ export default function PersonalInfo() {
                 </div>
                 <input
                   type="text"
-                  defaultValue={info?.rfc}
+                  value={rfc}
                   onChange={(e) => {
-                    handleChangeRfc(e.target.value);
+                    setRfc(e.target.value);
                   }}
                 />
               </div>
