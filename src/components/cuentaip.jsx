@@ -21,6 +21,7 @@ export default function PersonalInfo() {
       usuario(id: $id) {
         id
         username
+        email
       }
     }
   `;
@@ -67,13 +68,12 @@ export default function PersonalInfo() {
       setTelefono(info.telefono || null);
       setRfc(info.rfc || "");
     }
-  }, [info]); // Re-run when 'info' changes
+  }, [info]);
 
   const CREATE_INFORMACION = gql`
     mutation createInformacion($cliente: ID!, $telefono: Int, $rfc: String) {
       createInformacion(cliente: $cliente, telefono: $telefono, rfc: $rfc) {
         informacion {
-          cliente
           telefono
           rfc
         }
@@ -84,19 +84,29 @@ export default function PersonalInfo() {
   const [
     createInformacion,
     { data: dataNewInfo, loading: loadingNewInfo, error: errorNewInfo },
-  ] = useMutation(CREATE_INFORMACION);
-
-  const handleSubmitCreateInfo = () => {
-    createInformacion({
-      variables: {
-        cliente: usuario,
-        telefono: telefono,
-        rfc: rfc,
+  ] = useMutation(CREATE_INFORMACION, {
+    refetchQueries: [
+      {
+        query: GET_INFORMACION,
+        variables: { cliente: usuario },
       },
-    });
-    //console.log(data);
-    //console.log(loading);
-    //console.log(error);
+      "GetInformacion",
+    ],
+  });
+
+  const handleSubmitCreateInfo = async () => {
+    const tel = parseInt(telefono);
+    try {
+      const result = await createInformacion({
+        variables: {
+          cliente: usuario,
+          telefono: tel,
+          rfc: rfc,
+        },
+      });
+    } catch (e) {
+      //console.error(e);
+    }
   };
 
   const UPDATE_INFORMACION = gql`
@@ -124,24 +134,27 @@ export default function PersonalInfo() {
     ],
   });
 
-  const handleSubmitUpdateInfo = () => {
+  const handleSubmitUpdateInfo = async () => {
     const id = parseInt(info?.id);
     const tel = parseInt(telefono);
-    updateInformacion({
-      variables: {
-        id: id,
-        telefono: tel,
-        rfc: rfc,
-      },
-    });
+    try {
+      const result = await updateInformacion({
+        variables: {
+          id: id,
+          telefono: tel,
+          rfc: rfc,
+        },
+      });
+    } catch (e) {
+      //console.error(e);
+    }
   };
 
   const handleSubmit = () => {
-    if (info === undefined) {
-      handleSubmitCreateInfo();
-    }
-    if (info !== undefined) {
+    if (info) {
       handleSubmitUpdateInfo();
+    } else {
+      handleSubmitCreateInfo();
     }
     alert("Informacion actualizada!");
   };
@@ -315,8 +328,7 @@ export default function PersonalInfo() {
   };
 
   const showData = () => {
-    console.log(usuario);
-    console.log(dataD);
+    console.log(info);
   };
 
   return (
