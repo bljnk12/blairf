@@ -4,10 +4,12 @@ import { ProductContext } from "./ProductContext";
 import logo from "./media/fulllogo.png";
 import ItemPA from "./itemPa";
 import { autoTable } from "jspdf-autotable";
+import { gql } from "@apollo/client";
+import { useQuery } from "@apollo/client/react";
 
 const OrderPA = ({ orden }) => {
   const {
-    ordenId,
+    id,
     clienteNombre,
     total,
     dia,
@@ -33,29 +35,31 @@ const OrderPA = ({ orden }) => {
     mostrarFactura();
   }, [facturacion]);
 
-  const [items, setItems] = useState([]);
-  const [orderitems, setOrderItems] = useState();
+  const GET_ITEM = gql`
+    query GetItems($orden: ID!) {
+      articulo(orden: $orden) {
+        id
+        producto {
+          nombre
+        }
+        unidad
+        precio
+        cantidad
+      }
+    }
+  `;
 
-  useEffect(() => {
-    const Items = () => {
-      getItems();
-    };
-    Items();
-  }, []);
+  const {
+    loading: loadingI,
+    error: errorI,
+    data: dataI,
+  } = useQuery(GET_ITEM, {
+    variables: {
+      orden: id,
+    },
+  });
 
-  let getItems = async () => {
-    let response = await fetch(
-      "http://localhost:8000/blairfoodsb/item/create/"
-    );
-    let data = await response.json();
-    setItems(data);
-    // console.log(data)
-  };
-
-  useEffect(() => {
-    const itemsDelUsuario = items?.filter((item) => item.ordenId === ordenId);
-    setOrderItems(itemsDelUsuario);
-  }, [items]);
+  const items = dataI?.articulo;
 
   const [showTest, setShowTest] = useState(false);
 
@@ -69,18 +73,13 @@ const OrderPA = ({ orden }) => {
 
   //-----------PDF------------//
 
-  const { products } = useContext(ProductContext);
-
   const doc = new jsPDF();
 
   let info = [];
 
   orderitems?.forEach((element, index, array) => {
-    const nombres = products?.find((item) => {
-      return item.id === element.producto;
-    });
     info.push([
-      nombres?.nombre,
+      element.producto.nombre,
       element.unidad,
       element.precio,
       element.cantidad,
@@ -111,7 +110,7 @@ const OrderPA = ({ orden }) => {
     doc.text(`Fecha: ${fecha} `, 10, 30);
     doc.text("Blairfoods", 10, 40);
     doc.text("billing@blairfoods.com", 10, 47);
-    doc.text(`Orden id: ${ordenId} `, 10, 57);
+    doc.text(`Orden id: ${id} `, 10, 57);
     doc.text(`Cliente: ${clienteNombre} `, 10, 64);
     doc.text(`Dirección: ${direccionEnvio} `, 10, 71);
     doc.text(`Total: $${total} `, 10, 78);
@@ -128,7 +127,7 @@ const OrderPA = ({ orden }) => {
       head: [["Producto", "Unidad", "Precio", "Cantidad"]],
       body: info,
     });
-    doc.save(`${ordenId}.pdf`);
+    doc.save(`orden-${id}.pdf`);
   };
 
   //-----------PDF------------//
@@ -143,7 +142,7 @@ const OrderPA = ({ orden }) => {
           <div className="oda-1">
             <div className="odt">Orden id: </div>
             <div className="odtd" id="oda-1">
-              {ordenId}
+              {id}
             </div>
           </div>
           <div className="oda-2">
@@ -195,7 +194,7 @@ const OrderPA = ({ orden }) => {
             <div className="toi-3">Precio</div>
             <div className="toi-4">Cantidad</div>
           </div>
-          {orderitems?.map((item) => {
+          {items?.map((item) => {
             return <ItemPA item={item} key={item.id} />;
           })}
         </div>

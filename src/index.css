@@ -3010,7 +3010,7 @@
 }
 
 .order-detail-mod {
-  width: 50%;
+  width: 610px;
   height:60%;
   text-align: center;
   background-color: white;
@@ -3039,7 +3039,9 @@
 }
 
 .art-ord-title i {
-  width: 5%;
+  width: 20px;
+  margin-top: -10px;
+  margin-right: 10px;
   display: flex;
   align-items: center;
   justify-content: start;
@@ -3052,7 +3054,7 @@
   text-align: center;
   align-items: center;
   display: grid;
-  grid-template-columns: 30% 15% 20% 15% 20%;
+  grid-template-columns: 210px 100px 100px 100px 100px;
   grid-template-rows: 30px;
 }
 
@@ -3070,7 +3072,7 @@
   text-align: center;
   align-items: center;
   display: grid;
-  grid-template-columns: 30% 15% 20% 15% 20%;
+  grid-template-columns: 210px 100px 100px 100px 100px;
   grid-template-rows: 30px;
 }
 

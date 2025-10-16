@@ -12,6 +12,8 @@ import { useQuery, useMutation } from "@apollo/client/react";
 export default function Account() {
   const { user } = useContext(AuthContext);
 
+  const usuarioId = parseInt(user?.user_id);
+
   const navigate = useNavigate();
 
   const cuentaBtn = () => {
@@ -43,11 +45,11 @@ export default function Account() {
     data: dataU,
   } = useQuery(GET_USUARIO, {
     variables: {
-      id: user?.user_id,
+      id: usuarioId,
     },
   });
 
-  const usuarioG = dataU?.usuario;
+  const usuario = dataU?.usuario;
 
   // const showInfo = () => {
   //     console.log(clientes)
@@ -142,7 +144,7 @@ export default function Account() {
         </div>
 
         <div className="contenido-mc">
-          <h2 className="cuenta-username">{usuarioG?.username}</h2>
+          <h2 className="cuenta-username">{usuario?.username}</h2>
           <div className="cuenta-options">
             <div className="aviso-priv-cont">
               <Link className="avisopriv-link" to="/avisoprivacidad">

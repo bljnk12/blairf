@@ -7,7 +7,7 @@ import { useQuery } from "@apollo/client/react";
 export default function MisOrdenes() {
   const { user } = useContext(AuthContext);
 
-  const usuario = parseInt(user?.user_id);
+  const usuarioId = parseInt(user?.user_id);
 
   const [elementVisible, setElementVisible] = useState(false);
 
@@ -17,6 +17,7 @@ export default function MisOrdenes() {
         id
         dia
         total
+        factura
       }
     }
   `;
@@ -27,7 +28,7 @@ export default function MisOrdenes() {
     data: dataO,
   } = useQuery(GET_ORDEN, {
     variables: {
-      cliente: usuario,
+      cliente: usuarioId,
     },
   });
 

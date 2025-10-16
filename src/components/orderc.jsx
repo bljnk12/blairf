@@ -3,6 +3,8 @@ import { jsPDF } from "jspdf";
 import ItemCA from "./itemCa";
 import { ProductContext } from "./ProductContext";
 import logo from "./media/fulllogo.png";
+import { gql } from "@apollo/client";
+import { useQuery } from "@apollo/client/react";
 
 const OrderC = ({ orden }) => {
   const {
@@ -22,62 +24,48 @@ const OrderC = ({ orden }) => {
     factura: !solFactura,
   };
 
-  let updateF = async () => {
-    setSolFactura(!solFactura);
+  const GET_ITEM = gql`
+    query GetItems($orden: ID!) {
+      articulo(orden: $orden) {
+        id
+        producto {
+          nombre
+        }
+        unidad
+        precio
+        cantidad
+      }
+    }
+  `;
 
-    fetch(`http://localhost:8000/blairfoodsb/orden/${id}/`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(UpFactura),
-    });
-  };
+  const {
+    loading: loadingI,
+    error: errorI,
+    data: dataI,
+  } = useQuery(GET_ITEM, {
+    variables: {
+      orden: id,
+    },
+  });
 
-  const [items, setItems] = useState([]);
-  const [orderitems, setOrderItems] = useState([]);
-
-  useEffect(() => {
-    const Items = () => {
-      getItems();
-    };
-    Items();
-  }, []);
-
-  let getItems = async () => {
-    let response = await fetch(
-      "http://localhost:8000/blairfoodsb/item/create/"
-    );
-    let data = await response.json();
-    setItems(data);
-    // console.log(data)
-  };
-
-  useEffect(() => {
-    const itemsDelUsuario = items?.filter((item) => item.ordenId === ordenId);
-    setOrderItems(itemsDelUsuario);
-  }, [items]);
+  const items = dataI?.articulo;
 
   const [showTest, setShowTest] = useState(false);
 
   const showTestBtn = () => {
     setShowTest(!showTest);
+    console.log(items);
   };
 
   //-----------PDF------------//
-
-  const { products } = useContext(ProductContext);
 
   const doc = new jsPDF();
 
   let info = [];
 
-  orderitems?.forEach((element, index, array) => {
-    const nombres = products?.find((item) => {
-      return item.id === element.producto;
-    });
+  items?.forEach((element, index, array) => {
     info.push([
-      nombres?.nombre,
+      element.producto.nombre,
       element.unidad,
       element.precio,
       element.cantidad,
@@ -119,7 +107,7 @@ const OrderC = ({ orden }) => {
       head: [["Producto", "Unidad", "Precio", "Cantidad"]],
       body: info,
     });
-    doc.save(`${ordenId}.pdf`);
+    doc.save(`orden-${ordenId}.pdf`);
   };
 
   //-----------PDF------------//
@@ -140,13 +128,13 @@ const OrderC = ({ orden }) => {
                 <i
                   class="fa-solid fa-circle-check"
                   style={{ color: "#48bb78" }}
-                  onClick={updateF}
+                  //onClick={updateF}
                 />
               ) : (
                 <i
                   class="fa-solid fa-circle-xmark"
                   style={{ color: "#f56565" }}
-                  onClick={updateF}
+                  //onClick={updateF}
                 />
               )}
             </td>
@@ -188,7 +176,7 @@ const OrderC = ({ orden }) => {
                 <div className="toi-5">Subtotal</div>
               </div>
               <div className="odp-table-cd-items">
-                {orderitems?.map((item) => {
+                {items?.map((item) => {
                   return <ItemCA item={item} key={item.id} />;
                 })}
               </div>

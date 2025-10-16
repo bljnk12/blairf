@@ -8,9 +8,13 @@ import LoginN from "./loginN";
 import AuthContext from "./AuthContext";
 import CartItemC from "./cartitemc";
 import ODirectionC from "./odirectionc";
+import { gql } from "@apollo/client";
+import { useQuery, useMutation } from "@apollo/client/react";
 
 export default function CartN() {
   const { user } = useContext(AuthContext);
+
+  const usuarioId = parseInt(user?.user_id);
 
   const { cart, clearCart } = useContext(CartContext);
 
@@ -51,48 +55,54 @@ export default function CartN() {
     }
   }, [cart]);
 
-  const [clientes, setClientes] = useState([]);
-  const [usuario, setUsuario] = useState();
+  const GET_USUARIO = gql`
+    query GetUsuario($id: ID!) {
+      usuario(id: $id) {
+        id
+        username
+      }
+    }
+  `;
 
-  let getClientes = async () => {
-    let response = await fetch(
-      "http://localhost:8000/blairfoodsb/user/create/"
-    );
-    let data = await response.json();
-    setClientes(data);
-    // console.log(data)
-  };
+  const {
+    loading: loadingU,
+    error: errorU,
+    data: dataU,
+  } = useQuery(GET_USUARIO, {
+    variables: {
+      id: usuarioId,
+    },
+  });
 
-  useEffect(() => {
-    getClientes();
-  }, []);
+  const usuario = dataU?.usuario;
 
-  useEffect(() => {
-    const usuario = clientes.find((usr) => usr.id === user?.user_id);
-    setUsuario(usuario);
-  }, [clientes, user?.user_id]);
+  const GET_DIRECCION = gql`
+    query GetDireccion($cliente: ID!) {
+      direccion(cliente: $cliente) {
+        id
+        calle
+        ninterior
+        nexterior
+        colonia
+        ciudad
+        estado
+        cp
+        facturacion
+      }
+    }
+  `;
 
-  const [direcciones, setDirecciones] = useState([]);
-  const [userDirection, setUserDirection] = useState([]);
+  const {
+    loading: loadingD,
+    error: errorD,
+    data: dataD,
+  } = useQuery(GET_DIRECCION, {
+    variables: {
+      cliente: usuarioId,
+    },
+  });
 
-  useEffect(() => {
-    getDirections();
-  }, [user?.user_id]);
-
-  let getDirections = async () => {
-    let response = await fetch(
-      "http://localhost:8000/blairfoodsb/userdirection/create/"
-    );
-    let data = await response.json();
-    setDirecciones(data);
-  };
-
-  useEffect(() => {
-    const userdirection = direcciones?.filter(
-      (dir) => dir.cliente === user?.user_id
-    );
-    setUserDirection(userdirection);
-  }, [direcciones, user?.user_id]);
+  const direcciones = dataD?.direccion;
 
   const [direccion, setDireccion] = useState(null);
 
@@ -522,7 +532,7 @@ export default function CartN() {
                   </div>
                   <div>
                     <div className="direcciones-cont">
-                      {userDirection?.map((direction) => {
+                      {direcciones?.map((direction) => {
                         return (
                           <ODirectionC
                             direction={direction}

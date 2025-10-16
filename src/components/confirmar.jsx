@@ -8,9 +8,13 @@ import AuthContext from "./AuthContext";
 import OrderCC from "./ordercc";
 import ItemCAI from "./itemCaI";
 import ItemCAA from "./itemCaa";
+import { gql } from "@apollo/client";
+import { useQuery } from "@apollo/client/react";
 
 export default function Confirm() {
   const { user } = useContext(AuthContext);
+
+  const usuario = parseInt(user?.user_id);
 
   const { cart } = useContext(CartContext);
 
@@ -30,65 +34,65 @@ export default function Confirm() {
     setShowLogin(false);
   }
 
-  const [ordenes, setOrdenes] = useState([]);
-  const [userorder, setUserOrder] = useState([]);
+  const GET_ORDEN = gql`
+    query GetOrdenes($cliente: ID!) {
+      orden(cliente: $cliente) {
+        id
+        dia
+        total
+        factura
+      }
+    }
+  `;
 
-  useEffect(() => {
-    const Ordenes = () => {
-      getOrdenes();
-    };
-    Ordenes();
-  }, []);
+  const {
+    loading: loadingO,
+    error: errorO,
+    data: dataO,
+  } = useQuery(GET_ORDEN, {
+    variables: {
+      cliente: usuario,
+    },
+  });
 
-  let getOrdenes = async () => {
-    let response = await fetch(
-      "http://localhost:8000/blairfoodsb/orden/create/"
-    );
-    let data = await response.json();
-    setOrdenes(data);
-    // console.log(data)
-  };
-
-  useEffect(() => {
-    const userorder = ordenes.filter(
-      (ord) => ord.cliente === user?.user_id && ord.revisada === true
-    );
-    setUserOrder(userorder);
-  }, [ordenes]);
+  const ordenes = dataO?.orden;
 
   const [ordenId, setOrdenId] = useState();
-  const [items, setItems] = useState([]);
-  const [orderitems, setOrderItems] = useState([]);
 
   const getOrdenId = (valor) => {
     setOrdenId(valor);
   };
 
-  useEffect(() => {
-    const Items = () => {
-      getItems();
-    };
-    Items();
-  }, []);
+  const GET_ITEM = gql`
+    query GetItems($orden: ID!) {
+      articulo(orden: $orden) {
+        id
+        producto {
+          nombre
+        }
+        unidad
+        precio
+        cantidad
+      }
+    }
+  `;
 
-  let getItems = async () => {
-    let response = await fetch(
-      "http://localhost:8000/blairfoodsb/item/create/"
-    );
-    let data = await response.json();
-    setItems(data);
-    // console.log(data)
-  };
+  const {
+    loading: loadingI,
+    error: errorI,
+    data: dataI,
+  } = useQuery(GET_ITEM, {
+    variables: {
+      orden: ordenId,
+    },
+  });
 
-  useEffect(() => {
-    const itemsDelUsuario = items?.filter((item) => item.ordenId === ordenId);
-    setOrderItems(itemsDelUsuario);
-  }, [ordenId]);
+  const items = dataI?.articulo;
 
   const [totalIni, setTotalIni] = useState();
 
   const showTotalIni = () => {
-    const subtotal = orderitems?.map((item) => item.cantidad * item.precio);
+    const subtotal = items?.map((item) => item.cantidad * item.precio);
     const total = subtotal.reduce((a, b) => a + b, 0);
     setTotalIni(total);
   };
@@ -96,7 +100,7 @@ export default function Confirm() {
   const [totalAct, setTotalAct] = useState();
 
   const showTotalAct = () => {
-    const subtotal = orderitems?.map((item) => {
+    const subtotal = items?.map((item) => {
       return item.cantidadf * item.preciof;
     });
     const total = subtotal.reduce((a, b) => a + b, 0);
@@ -106,7 +110,7 @@ export default function Confirm() {
   useEffect(() => {
     showTotalIni();
     showTotalAct();
-  }, [orderitems]);
+  }, [items]);
 
   const targetElement1 = useRef();
   const targetElement2 = useRef();
@@ -303,7 +307,7 @@ export default function Confirm() {
                       </div>
                     ) : (
                       <>
-                        {userorder?.map((orden) => {
+                        {ordenes?.map((orden) => {
                           return (
                             <OrderCC
                               orden={orden}

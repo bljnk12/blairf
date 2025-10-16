@@ -8,7 +8,7 @@ import { useQuery, useMutation } from "@apollo/client/react";
 export default function PersonalInfo() {
   const { user, logoutUser } = useContext(AuthContext);
 
-  const usuario = parseInt(user?.user_id);
+  const usuarioId = parseInt(user?.user_id);
 
   const navigate = useNavigate();
 
@@ -32,11 +32,11 @@ export default function PersonalInfo() {
     data: dataU,
   } = useQuery(GET_USUARIO, {
     variables: {
-      id: usuario,
+      id: usuarioId,
     },
   });
 
-  const usuarioG = dataU?.usuario;
+  const usuario = dataU?.usuario;
 
   const GET_INFORMACION = gql`
     query GetInformacion($cliente: ID!) {
@@ -54,7 +54,7 @@ export default function PersonalInfo() {
     data: dataI,
   } = useQuery(GET_INFORMACION, {
     variables: {
-      cliente: usuario,
+      cliente: usuarioId,
     },
   });
 
@@ -99,7 +99,7 @@ export default function PersonalInfo() {
     try {
       const result = await createInformacion({
         variables: {
-          cliente: usuario,
+          cliente: usuarioId,
           telefono: tel,
           rfc: rfc,
         },
@@ -184,7 +184,7 @@ export default function PersonalInfo() {
     data: dataD,
   } = useQuery(GET_DIRECCION, {
     variables: {
-      cliente: usuario,
+      cliente: usuarioId,
     },
   });
 
@@ -277,7 +277,7 @@ export default function PersonalInfo() {
       try {
         const result = await createDireccion({
           variables: {
-            cliente: usuario,
+            cliente: usuarioId,
             calle: newCalle,
             ninterior: newNinterior,
             nexterior: newNexterior,
@@ -348,7 +348,7 @@ export default function PersonalInfo() {
                 <div className="label" for="nombre">
                   Nombre
                 </div>
-                <div id="nombre">{usuarioG?.username}</div>
+                <div id="nombre">{usuario?.username}</div>
               </div>
               <div className="form-group-2">
                 <div className="label" for="telefono">
@@ -366,7 +366,7 @@ export default function PersonalInfo() {
                 <div className="label" for="email">
                   Correo
                 </div>
-                <div id="email">{usuarioG?.email}</div>
+                <div id="email">{usuario?.email}</div>
               </div>
               <div className="form-group-4">
                 <div className="label" for="rfc">
