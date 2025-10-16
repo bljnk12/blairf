@@ -6,89 +6,94 @@ import AuthContext from "../components/AuthContext";
 import OrderCC from "./ordercc";
 import ItemCAI from "./itemCaI";
 import ItemCAA from "./itemCaa";
+import { gql } from "@apollo/client";
+import { useQuery, useMutation } from "@apollo/client/react";
 
 export default function Confirm({ close, gotocart }) {
   const { user } = useContext(AuthContext);
 
+  const usuarioId = parseInt(user?.user_id);
+
   const { cart } = useContext(CartContext);
 
-  const [ordenes, setOrdenes] = useState([]);
-  const [userorder, setUserOrder] = useState([]);
+  const GET_ORDEN = gql`
+    query GetOrdenes($cliente: ID!) {
+      orden(cliente: $cliente) {
+        id
+        dia
+        total
+        factura
+      }
+    }
+  `;
 
-  useEffect(() => {
-    const Ordenes = () => {
-      getOrdenes();
-    };
-    Ordenes();
-  }, []);
+  const {
+    loading: loadingO,
+    error: errorO,
+    data: dataO,
+  } = useQuery(GET_ORDEN, {
+    variables: {
+      cliente: usuarioId,
+    },
+  });
 
-  let getOrdenes = async () => {
-    let response = await fetch(
-      "http://localhost:8000/blairfoodsb/orden/create/"
-    );
-    let data = await response.json();
-    setOrdenes(data);
-    // console.log(data)
-  };
+  const ordenes = dataO?.orden;
 
-  useEffect(() => {
-    const userorder = ordenes.filter(
-      (ord) => ord.cliente === user?.user_id && ord.revisada === true
-    );
-    setUserOrder(userorder);
-  }, [ordenes]);
+  const [id, setId] = useState();
 
-  const [ordenId, setOrdenId] = useState();
-  const [items, setItems] = useState([]);
-  const [orderitems, setOrderItems] = useState([]);
+  const GET_ITEM = gql`
+    query GetItems($orden: ID!) {
+      articulo(orden: $orden) {
+        id
+        producto {
+          imagen
+          nombre
+        }
+        unidad
+        precio
+        cantidad
+        preciof
+        cantidadf
+      }
+    }
+  `;
 
-  const getOrdenId = (valor) => {
-    setOrdenId(valor);
-  };
+  const {
+    loading: loadingI,
+    error: errorI,
+    data: dataI,
+  } = useQuery(GET_ITEM, {
+    variables: {
+      orden: id,
+    },
+  });
 
-  useEffect(() => {
-    const Items = () => {
-      getItems();
-    };
-    Items();
-  }, []);
+  const items = dataI?.articulo;
 
-  let getItems = async () => {
-    let response = await fetch(
-      "http://localhost:8000/blairfoodsb/item/create/"
-    );
-    let data = await response.json();
-    setItems(data);
-    // console.log(data)
-  };
-
-  useEffect(() => {
-    const itemsDelUsuario = items?.filter((item) => item.ordenId === ordenId);
-    setOrderItems(itemsDelUsuario);
-  }, [ordenId]);
-
-  const [totalIni, setTotalIni] = useState();
+  const [totalIni, setTotalIni] = useState(0);
 
   const showTotalIni = () => {
-    const subtotal = orderitems?.map((item) => item.cantidad * item.precio);
-    const total = subtotal.reduce((a, b) => a + b, 0);
+    const subtotal = items?.map((item) => {
+      return parseFloat(item.cantidad) * parseFloat(item.precio);
+    });
+    const total = subtotal?.reduce((a, b) => a + b, 0);
     setTotalIni(total);
   };
 
   const [totalAct, setTotalAct] = useState();
 
   const showTotalAct = () => {
-    const subtotal = orderitems?.map((item) => {
-      return item.cantidadf * item.preciof;
+    const subtotal = items?.map((item) => {
+      return parseFloat(item.cantidadf) * parseFloat(item.preciof);
     });
-    const total = subtotal.reduce((a, b) => a + b, 0);
+    const total = subtotal?.reduce((a, b) => a + b, 0);
     setTotalAct(total);
   };
 
   useEffect(() => {
     showTotalIni();
     showTotalAct();
-  }, [orderitems]);
+  }, [items]);
 
   const targetElement1 = useRef();
   const targetElement2 = useRef();
@@ -110,8 +115,6 @@ export default function Confirm({ close, gotocart }) {
       inline: "start",
     });
   }
-
-  const [id, setId] = useState();
 
   const getId = (valor) => {
     setId(valor);
@@ -151,6 +154,10 @@ export default function Confirm({ close, gotocart }) {
     scroll1();
   };
 
+  const showData = () => {
+    console.log(items);
+  };
+
   return (
     <div className="confirm-movil">
       <div class="contenido-cart">
@@ -167,20 +174,15 @@ export default function Confirm({ close, gotocart }) {
                   <div className="cld2">({cart?.length} articulos)</div>
                 </div>
                 <div className="orders-dashboard">
-                  {userorder?.length === 0 ? (
+                  {ordenes?.length === 0 ? (
                     <div className="no-orders-ad">
                       No tienes órdenes revisadas todavía!
                     </div>
                   ) : (
                     <>
-                      {userorder?.map((orden) => {
+                      {ordenes?.map((orden) => {
                         return (
-                          <OrderCC
-                            orden={orden}
-                            key={orden.id}
-                            getOrden={getOrdenId}
-                            getid={getId}
-                          />
+                          <OrderCC orden={orden} key={orden.id} getid={getId} />
                         );
                       })}
                     </>
@@ -200,7 +202,7 @@ export default function Confirm({ close, gotocart }) {
                     <div className="oit-cai-5">Subtotal</div>
                   </div>
                   <div className="order-ia-table-cont">
-                    {orderitems?.map((item) => {
+                    {items?.map((item) => {
                       return <ItemCAI item={item} key={item.id} />;
                     })}
                   </div>
@@ -217,7 +219,7 @@ export default function Confirm({ close, gotocart }) {
                     <div className="oit-caa-4">Eliminar</div>
                   </div>
                   <div className="order-ia-table-cont">
-                    {orderitems?.map((item) => {
+                    {items?.map((item) => {
                       return <ItemCAA item={item} key={item.id} />;
                     })}
                   </div>

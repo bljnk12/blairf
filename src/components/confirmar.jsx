@@ -14,7 +14,7 @@ import { useQuery } from "@apollo/client/react";
 export default function Confirm() {
   const { user } = useContext(AuthContext);
 
-  const usuario = parseInt(user?.user_id);
+  const usuarioId = parseInt(user?.user_id);
 
   const { cart } = useContext(CartContext);
 
@@ -51,28 +51,27 @@ export default function Confirm() {
     data: dataO,
   } = useQuery(GET_ORDEN, {
     variables: {
-      cliente: usuario,
+      cliente: usuarioId,
     },
   });
 
   const ordenes = dataO?.orden;
 
-  const [ordenId, setOrdenId] = useState();
-
-  const getOrdenId = (valor) => {
-    setOrdenId(valor);
-  };
+  const [id, setId] = useState();
 
   const GET_ITEM = gql`
     query GetItems($orden: ID!) {
       articulo(orden: $orden) {
         id
         producto {
+          imagen
           nombre
         }
         unidad
         precio
         cantidad
+        preciof
+        cantidadf
       }
     }
   `;
@@ -83,17 +82,19 @@ export default function Confirm() {
     data: dataI,
   } = useQuery(GET_ITEM, {
     variables: {
-      orden: ordenId,
+      orden: id,
     },
   });
 
   const items = dataI?.articulo;
 
-  const [totalIni, setTotalIni] = useState();
+  const [totalIni, setTotalIni] = useState(0);
 
   const showTotalIni = () => {
-    const subtotal = items?.map((item) => item.cantidad * item.precio);
-    const total = subtotal.reduce((a, b) => a + b, 0);
+    const subtotal = items?.map((item) => {
+      return parseFloat(item.cantidad) * parseFloat(item.precio);
+    });
+    const total = subtotal?.reduce((a, b) => a + b, 0);
     setTotalIni(total);
   };
 
@@ -101,9 +102,9 @@ export default function Confirm() {
 
   const showTotalAct = () => {
     const subtotal = items?.map((item) => {
-      return item.cantidadf * item.preciof;
+      return parseFloat(item.cantidadf) * parseFloat(item.preciof);
     });
-    const total = subtotal.reduce((a, b) => a + b, 0);
+    const total = subtotal?.reduce((a, b) => a + b, 0);
     setTotalAct(total);
   };
 
@@ -135,8 +136,6 @@ export default function Confirm() {
       inline: "start",
     });
   }
-
-  const [id, setId] = useState();
 
   const getId = (valor) => {
     setId(valor);
@@ -174,6 +173,11 @@ export default function Confirm() {
     });
     showEliminar();
     scroll1();
+  };
+
+  const showData = () => {
+    showTotalIni();
+    showTotalAct();
   };
 
   return (
@@ -301,7 +305,7 @@ export default function Confirm() {
                     <div className="cld2">({cart?.length} articulos)</div>
                   </Link>
                   <div className="orders-dashboard">
-                    {userorder?.length === 0 ? (
+                    {ordenes?.length === 0 ? (
                       <div className="no-orders-ad">
                         No tienes órdenes revisadas todavía!
                       </div>
@@ -312,7 +316,6 @@ export default function Confirm() {
                             <OrderCC
                               orden={orden}
                               key={orden.id}
-                              getOrden={getOrdenId}
                               getid={getId}
                             />
                           );
@@ -334,7 +337,7 @@ export default function Confirm() {
                       <div className="oit-cai-5">Subtotal</div>
                     </div>
                     <div className="order-ia-table-cont">
-                      {orderitems?.map((item) => {
+                      {items?.map((item) => {
                         return <ItemCAI item={item} key={item.id} />;
                       })}
                     </div>
@@ -351,7 +354,7 @@ export default function Confirm() {
                       <div className="oit-caa-4">Eliminar</div>
                     </div>
                     <div className="order-ia-table-cont">
-                      {orderitems?.map((item) => {
+                      {items?.map((item) => {
                         return <ItemCAA item={item} key={item.id} />;
                       })}
                     </div>

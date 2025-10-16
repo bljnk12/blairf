@@ -6,9 +6,13 @@ import CartItemC from "../components/cartitemc";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import ODirectionC from "../components/odirectionc";
+import { gql } from "@apollo/client";
+import { useQuery, useMutation } from "@apollo/client/react";
 
 const Cart = ({ close, gotoconf }) => {
   const { user } = useContext(AuthContext);
+
+  const usuarioId = parseInt(user?.user_id);
 
   const { cart, clearCart } = useContext(CartContext);
 
@@ -17,6 +21,55 @@ const Cart = ({ close, gotoconf }) => {
   const goHome = () => {
     navigate("/");
   };
+
+  const GET_USUARIO = gql`
+    query GetUsuario($id: ID!) {
+      usuario(id: $id) {
+        id
+        username
+      }
+    }
+  `;
+
+  const {
+    loading: loadingU,
+    error: errorU,
+    data: dataU,
+  } = useQuery(GET_USUARIO, {
+    variables: {
+      id: usuarioId,
+    },
+  });
+
+  const usuario = dataU?.usuario;
+
+  const GET_DIRECCION = gql`
+    query GetDireccion($cliente: ID!) {
+      direccion(cliente: $cliente) {
+        id
+        calle
+        ninterior
+        nexterior
+        colonia
+        ciudad
+        estado
+        cp
+        facturacion
+      }
+    }
+  `;
+
+  const {
+    loading: loadingD,
+    error: errorD,
+    data: dataD,
+  } = useQuery(GET_DIRECCION, {
+    variables: {
+      cliente: usuarioId,
+    },
+  });
+
+  const direcciones = dataD?.direccion;
 
   const [newTotal, setNewTotal] = useState();
 
@@ -42,78 +95,6 @@ const Cart = ({ close, gotoconf }) => {
       setElementVisible(false);
     }
   }, [cart]);
-
-  const generateId =
-    Date.now().toString(35) + Math.random().toString(36).slice(2);
-
-  const getItems = async () => {
-    let carro = cart;
-    let i = carro.length;
-    for (let a = 0; a < i; a++) {
-      const itemCart = cart[a];
-      const item = {
-        ordenId: generateId,
-        producto: itemCart.id,
-        maduracion: itemCart.maduracion,
-        unidad: itemCart.unidad,
-        precio: itemCart.precio,
-        preciof: itemCart.precio,
-        cantidad: itemCart.amount,
-        cantidadf: itemCart.amount,
-      };
-      fetch("http://localhost:8000/blairfoodsb/item/create/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(item),
-      });
-    }
-    console.log(cart);
-  };
-
-  const [clientes, setClientes] = useState([]);
-  const [usuario, setUsuario] = useState();
-
-  let getClientes = async () => {
-    let response = await fetch(
-      "http://localhost:8000/blairfoodsb/user/create/"
-    );
-    let data = await response.json();
-    setClientes(data);
-    // console.log(data)
-  };
-
-  useEffect(() => {
-    getClientes();
-  }, []);
-
-  useEffect(() => {
-    const usuario = clientes.find((usr) => usr.id === user?.user_id);
-    setUsuario(usuario);
-  }, [clientes]);
-
-  const [direcciones, setDirecciones] = useState([]);
-  const [userDirection, setUserDirection] = useState([]);
-
-  useEffect(() => {
-    getDirections();
-  }, []);
-
-  let getDirections = async () => {
-    let response = await fetch(
-      "http://localhost:8000/blairfoodsb/userdirection/create/"
-    );
-    let data = await response.json();
-    setDirecciones(data);
-  };
-
-  useEffect(() => {
-    const userdirection = direcciones?.filter(
-      (dir) => dir.cliente === user?.user_id
-    );
-    setUserDirection(userdirection);
-  }, [direcciones]);
 
   const [direccion, setDireccion] = useState(null);
 
@@ -182,9 +163,24 @@ const Cart = ({ close, gotoconf }) => {
 
   const [factura, setFactura] = useState(false);
 
-  const getOrden = () => {
-    const orden = {
-      ordenId: generateId,
+  const [colocar, setColocar] = useState(false);
+
+  const showColocar = () => {
+    setColocar(!colocar);
+  };
+
+  const handleSubmit = async () => {
+    if (user === null) {
+      alert("Inicie sesion para comprar!");
+      return; // Stop execution
+    }
+
+    if (newTotal < 0) {
+      alert("La compra debe ser mayor a $400!");
+      return; // Stop execution
+    }
+
+    const orderPayload = {
       cliente: user?.user_id,
       clienteNombre: usuario?.username,
       productos: "ver productos",
@@ -194,40 +190,41 @@ const Cart = ({ close, gotoconf }) => {
       pago: pago,
       factura: factura,
       direccionEnvio: direccion,
-      colocada: true,
+
+      items: cart.map((itemCart) => ({
+        producto: itemCart.id,
+        maduracion: itemCart.maduracion,
+        unidad: itemCart.unidad,
+        precio: itemCart.precio,
+        preciof: itemCart.precio,
+        cantidad: itemCart.amount,
+        cantidadf: itemCart.amount,
+      })),
     };
-    fetch("http://localhost:8000/blairfoodsb/orden/create/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(orden),
-    });
-    console.log(orden);
-  };
-
-  const [colocar, setColocar] = useState(false);
-
-  const showColocar = () => {
-    setColocar(!colocar);
-  };
-
-  const handleSubmit = () => {
-    if (user === null) {
-      alert("Inicie sesion para comprar!");
-    }
-    if (user !== null) {
-      if (newTotal < 400) {
-        alert("La compra debe ser mayor a $400!");
+    console.log("Order:", orderPayload);
+    try {
+      const response = await fetch(
+        "http://localhost:8000/blairfoodsb/orden/place-order/",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(orderPayload),
+        }
+      );
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("DRF Validation Error:", errorData);
+        return;
       }
-      if (newTotal >= 400) {
-        getOrden();
-        getItems();
-        clearCart();
-        goHome();
-        //testConnection()
-        alert("Su orden se ha procesado con exito!");
-      }
+      alert("Pedido colocado con éxito!");
+      // 3. Success actions
+      clearCart();
+      goHome();
+    } catch (error) {
+      console.error("Error placing order:", error);
+      alert("Hubo un error al colocar el pedido. Intenta de nuevo.");
     }
   };
 
@@ -432,7 +429,7 @@ const Cart = ({ close, gotoconf }) => {
                 </div>
                 <div>
                   <div className="direcciones-cont">
-                    {userDirection?.map((direction) => {
+                    {direcciones?.map((direction) => {
                       return (
                         <ODirectionC
                           direction={direction}

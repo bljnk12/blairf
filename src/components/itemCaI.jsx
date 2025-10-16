@@ -4,12 +4,6 @@ import { ProductContext } from "./ProductContext";
 function ItemCAI({ item }) {
   const { producto, unidad, precio, cantidad } = item;
 
-  const { products } = useContext(ProductContext);
-
-  const product = products.find((item) => {
-    return item.id === producto;
-  });
-
   const [unidadShort, setUnidadShort] = useState("");
 
   useEffect(() => {
@@ -36,11 +30,11 @@ function ItemCAI({ item }) {
           className="ci-image"
           width={50}
           height={50}
-          src={product.imagen}
+          src={`http://localhost:8000/${producto.imagen}`}
           alt=""
         />
       </div>
-      <div className="oi-cai-2">{product.nombre}</div>
+      <div className="oi-cai-2">{producto.nombre}</div>
       <div className="oi-cai-3">
         <div className="oi-caa-qc">{cantidad}</div>
         <div className="oi-caa-qu">{unidadShort}</div>

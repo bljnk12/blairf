@@ -15,35 +15,6 @@ const Cart = ({ close }) => {
     }
   }, [cart]);
 
-  const generateId =
-    Date.now().toString(35) + Math.random().toString(36).slice(2);
-
-  const getItems = async () => {
-    let carro = cart;
-    let i = carro.length;
-    for (let a = 0; a < i; a++) {
-      const itemCart = cart[a];
-      const item = {
-        ordenId: generateId,
-        producto: itemCart.id,
-        maduracion: itemCart.maduracion,
-        unidad: itemCart.unidad,
-        precio: itemCart.precio,
-        preciof: itemCart.precio,
-        cantidad: itemCart.amount,
-        cantidadf: itemCart.amount,
-      };
-      fetch("http://localhost:8000/blairfoodsb/item/create/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(item),
-      });
-      // console.log(item)
-    }
-  };
-
   const [fechaE, setFechaE] = useState("");
 
   function disablePastDates() {
@@ -92,11 +63,15 @@ const Cart = ({ close }) => {
 
   const [direccion, setDireccion] = useState("");
 
-  const getOrden = () => {
-    const orden = {
-      ordenId: generateId,
-      cliente: 8,
-      clienteNombre: "Usuario Blair",
+  const handleSubmit = async () => {
+    if (total < 400) {
+      alert("La compra debe ser mayor a $400!");
+      return; // Stop execution
+    }
+
+    const orderPayload = {
+      cliente: user?.user_id,
+      clienteNombre: usuario?.username,
       productos: "ver productos",
       total: total,
       diaEntrega: diaE,
@@ -104,30 +79,42 @@ const Cart = ({ close }) => {
       pago: pago,
       factura: factura,
       direccionEnvio: direccion,
-      colocada: true,
-    };
-    fetch("http://localhost:8000/blairfoodsb/orden/create/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(orden),
-    });
-    console.log(orden);
-  };
 
-  const handleSubmit = () => {
-    if (total < 400) {
-      alert("La compra debe ser mayor a $400!");
-    }
-    if (total >= 400) {
-      getOrden();
-      getItems();
+      items: cart.map((itemCart) => ({
+        producto: itemCart.id,
+        maduracion: itemCart.maduracion,
+        unidad: itemCart.unidad,
+        precio: itemCart.precio,
+        preciof: itemCart.precio,
+        cantidad: itemCart.amount,
+        cantidadf: itemCart.amount,
+      })),
+    };
+    console.log("Order:", orderPayload);
+    try {
+      const response = await fetch(
+        "http://localhost:8000/blairfoodsb/orden/place-order/",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(orderPayload),
+        }
+      );
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("DRF Validation Error:", errorData);
+        return;
+      }
+      alert("Pedido colocado con éxito!");
+      // 3. Success actions
       clearCart();
-      //testConnection()
-      alert("Su orden se ha procesado con exito!");
+      goHome();
+    } catch (error) {
+      console.error("Error placing order:", error);
+      alert("Hubo un error al colocar el pedido. Intenta de nuevo.");
     }
-    close();
   };
 
   const canasta = useRef();

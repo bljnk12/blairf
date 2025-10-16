@@ -34,6 +34,8 @@ const OrderC = ({ orden }) => {
         unidad
         precio
         cantidad
+        preciof
+        cantidadf
       }
     }
   `;

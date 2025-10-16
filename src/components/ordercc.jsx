@@ -1,11 +1,11 @@
 import React from "react";
 
-const OrderCC = ({ orden, getOrden, getid }) => {
-  const { id, ordenId, total, dia, estatus, revisada } = orden;
+const OrderCC = ({ orden, getid }) => {
+  const { id, total, dia, estatus, revisada } = orden;
 
-  const getOrdenId = () => {
-    getOrden(ordenId);
+  const getId = () => {
     getid(id);
+    console.log(id);
   };
 
   let opciones = { year: "numeric", month: "short", day: "numeric" };
@@ -18,7 +18,7 @@ const OrderCC = ({ orden, getOrden, getid }) => {
     });
 
   return (
-    <div className="ordenes-cliente-cc" onClick={getOrdenId}>
+    <div className="ordenes-cliente-cc" onClick={getId}>
       <div className="occc-bag">
         <i class="fa-solid fa-bag-shopping"></i>
       </div>

@@ -3,30 +3,34 @@ import { Link } from "react-router-dom";
 import AuthContext from "../components/AuthContext";
 import PersonalInfo from "../components/cuentaip";
 import MisOrdenes from "./cuentao";
+import { gql } from "@apollo/client";
+import { useQuery, useMutation } from "@apollo/client/react";
 
 export default function Account() {
   const { user } = useContext(AuthContext);
 
-  const [clientes, setClientes] = useState([]);
-  const [usuario, setUsuario] = useState();
+  const usuarioId = parseInt(user?.user_id);
 
-  useEffect(() => {
-    getClientes();
-  }, []);
+  const GET_USUARIO = gql`
+    query GetUsuario($id: ID!) {
+      usuario(id: $id) {
+        id
+        username
+      }
+    }
+  `;
 
-  let getClientes = async () => {
-    let response = await fetch(
-      "http://localhost:8000/blairfoodsb/user/create/"
-    );
-    let data = await response.json();
-    setClientes(data);
-    // console.log(data)
-  };
+  const {
+    loading: loadingU,
+    error: errorU,
+    data: dataU,
+  } = useQuery(GET_USUARIO, {
+    variables: {
+      id: usuarioId,
+    },
+  });
 
-  useEffect(() => {
-    const usuario = clientes.find((usr) => usr.id === user?.user_id);
-    setUsuario(usuario);
-  }, [clientes]);
+  const usuario = dataU?.usuario;
 
   // const showInfo = () => {
   //     console.log(clientes)

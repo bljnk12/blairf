@@ -1,10 +1,9 @@
 import React from "react";
 
-const OrderCC = ({ orden, getOrden, getid }) => {
-  const { id, ordenId, total, dia, estatus } = orden;
+const OrderCC = ({ orden, getid }) => {
+  const { id, total, dia, estatus } = orden;
 
-  const getOrdenId = () => {
-    getOrden(ordenId);
+  const getId = () => {
     getid(id);
   };
 
@@ -19,20 +18,20 @@ const OrderCC = ({ orden, getOrden, getid }) => {
 
   return (
     <div className="ordenes-cliente-cc">
-      <table className="order-detail-table-cc">
-        <tr>
-          <td className="order-detail-row">
+      <div className="order-detail-table-cc">
+        <div>
+          <div className="order-detail-row">
             <i class="fa-solid fa-bag-shopping"></i> Pedido colocado
-          </td>
-          <td className="order-detail-row">{fecha}</td>
-          <td className="order-detail-row">{total}</td>
-          <td className="order-detail-row">
-            <button className="odtcc-btn" onClick={getOrdenId}>
+          </div>
+          <div className="order-detail-row">{fecha}</div>
+          <div className="order-detail-row">{total}</div>
+          <div className="order-detail-row">
+            <button className="odtcc-btn" onClick={getId}>
               Ver
             </button>
-          </td>
-        </tr>
-      </table>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
