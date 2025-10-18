@@ -7,7 +7,7 @@ import { gql } from "@apollo/client";
 import { useQuery } from "@apollo/client/react";
 
 const Order = ({ orden }) => {
-  const { id, ordenId, clienteNombre, total, dia, factura, confirmada } = orden;
+  const { id, clienteNombre, total, dia, factura, confirmada } = orden;
 
   const [solFactura, setSolFactura] = useState(factura);
 
@@ -76,7 +76,7 @@ const Order = ({ orden }) => {
 
   const print = () => {
     doc.addImage(logo, 80, 10, 50, 20);
-    doc.text(`Orden id: ${ordenId} `, 10, 50);
+    doc.text(`Orden id: ${id} `, 10, 50);
     doc.text(`Cliente: ${clienteNombre} `, 10, 60);
     doc.text(`Fecha: ${fecha} `, 10, 70);
     doc.text(`Total: $${total} `, 10, 80);
@@ -90,7 +90,7 @@ const Order = ({ orden }) => {
       body: info,
     });
 
-    doc.save(`${ordenId}.pdf`);
+    doc.save(`orden-${id}.pdf`);
   };
 
   //-----------PDF------------//

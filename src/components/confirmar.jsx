@@ -193,6 +193,12 @@ export default function Confirm() {
     }
   };
 
+  const [eliminar, setEliminar] = useState(false);
+
+  const showEliminar = () => {
+    setEliminar(!eliminar);
+  };
+
   const DELETE_ORDEN = gql`
     mutation EliminarOrden($id: ID!) {
       deleteOrden(id: $id) {
@@ -229,12 +235,6 @@ export default function Confirm() {
     } else {
       alert("Inicia sesión por favor!");
     }
-  };
-
-  const [eliminar, setEliminar] = useState(false);
-
-  const showEliminar = () => {
-    setEliminar(!eliminar);
   };
 
   const showData = () => {

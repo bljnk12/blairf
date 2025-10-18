@@ -39,6 +39,15 @@ export default function Confirm({ close, gotocart }) {
 
   const ordenes = dataO?.orden;
 
+  const [ordenesF, setOrdenesF] = useState([]);
+
+  useEffect(() => {
+    const ordenesFiltradas = ordenes?.filter(
+      (orden) => orden.confirmada === false
+    );
+    setOrdenesF(ordenesFiltradas);
+  }, [ordenes]);
+
   const [id, setId] = useState();
 
   const GET_ARTICULO = gql`
@@ -122,19 +131,45 @@ export default function Confirm({ close, gotocart }) {
     scroll2();
   };
 
-  const confirm = {
-    confirmada: true,
-  };
+  const UPDATE_ORDEN = gql`
+    mutation updateOrden($id: ID!, $confirmada: Boolean) {
+      updateOrden(id: $id, confirmada: $confirmada) {
+        orden {
+          id
+          confirmada
+        }
+      }
+    }
+  `;
 
-  let confirmOrder = async () => {
-    fetch(`http://localhost:8000/blairfoodsb/orden/${id}/`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(confirm),
+  const [updateOrden, { data: dataUO, loading: loadingUO, error: errorUO }] =
+    useMutation(UPDATE_ORDEN, {
+      refetchQueries: [
+        {
+          query: GET_ORDEN,
+          variables: { cliente: usuarioId },
+        },
+        "GetOrdenes",
+      ],
     });
-    scroll1();
+
+  const handleSubmitUpdateOrden = async () => {
+    if (user) {
+      try {
+        const result = await updateOrden({
+          variables: {
+            id: parseInt(id),
+            confirmada: true,
+          },
+        });
+        scroll1();
+      } catch (e) {
+        // The 400 Bad Request error will be caught here!
+        //console.error(e);
+      }
+    } else {
+      alert("Inicia sesión por favor!");
+    }
   };
 
   const [eliminar, setEliminar] = useState(false);
@@ -143,15 +178,42 @@ export default function Confirm({ close, gotocart }) {
     setEliminar(!eliminar);
   };
 
-  let deleteOrder = async () => {
-    fetch(`http://localhost:8000/blairfoodsb/orden/${id}/`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
+  const DELETE_ORDEN = gql`
+    mutation EliminarOrden($id: ID!) {
+      deleteOrden(id: $id) {
+        message
+      }
+    }
+  `;
+
+  const [deleteOrden, { data: dataDO, loading: loadingDO, error: errorDO }] =
+    useMutation(DELETE_ORDEN, {
+      refetchQueries: [
+        {
+          query: GET_ORDEN,
+          variables: { cliente: usuarioId },
+        },
+        "GetOrdenes",
+      ],
     });
-    showEliminar();
-    scroll1();
+
+  const handleSubmitDeleteOrden = async () => {
+    if (user) {
+      try {
+        const result = await deleteOrden({
+          variables: {
+            id: parseInt(id),
+          },
+        });
+        //console.log(result);
+        showEliminar();
+        scroll1();
+      } catch (e) {
+        console.error(e);
+      }
+    } else {
+      alert("Inicia sesión por favor!");
+    }
   };
 
   const showData = () => {
@@ -180,7 +242,7 @@ export default function Confirm({ close, gotocart }) {
                     </div>
                   ) : (
                     <>
-                      {ordenes?.map((orden) => {
+                      {ordenesF?.map((orden) => {
                         return (
                           <OrderCC orden={orden} key={orden.id} getid={getId} />
                         );

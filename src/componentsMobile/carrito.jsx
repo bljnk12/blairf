@@ -181,7 +181,7 @@ const Cart = ({ close, gotoconf }) => {
     }
 
     const orderPayload = {
-      cliente: user?.user_id,
+      cliente: usuarioId,
       clienteNombre: usuario?.username,
       productos: "ver productos",
       total: newTotal,
