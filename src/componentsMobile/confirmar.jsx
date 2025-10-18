@@ -296,7 +296,10 @@ export default function Confirm({ close, gotocart }) {
                   <button className="colocar-btn" onClick={showEliminar}>
                     Cancelar orden
                   </button>
-                  <button className="colocar-btn" onClick={confirmOrder}>
+                  <button
+                    className="colocar-btn"
+                    onClick={handleSubmitUpdateOrden}
+                  >
                     Confirmar orden
                   </button>
                 </div>
@@ -309,7 +312,10 @@ export default function Confirm({ close, gotocart }) {
         <div className="advice-cont">
           <div className="advice-del-msn">
             <div>Estas seguro que deseas eliminar la orden?</div>
-            <button className="advice-del-confirm" onClick={deleteOrder}>
+            <button
+              className="advice-del-confirm"
+              onClick={handleSubmitDeleteOrden}
+            >
               Si
             </button>
             <button className="advice-del-cancel" onClick={showEliminar}>

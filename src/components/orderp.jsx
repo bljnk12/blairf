@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import OrderPA from "./orderpa";
 import logo from "./media/fulllogo.png";
 import ItemPA from "./itemPa";
 import { autoTable } from "jspdf-autotable";
