@@ -24,7 +24,7 @@ const OrderC = ({ orden }) => {
     factura: !solFactura,
   };
 
-  const GET_ITEM = gql`
+  const GET_ARTICULO = gql`
     query GetItems($orden: ID!) {
       articulo(orden: $orden) {
         id
@@ -44,7 +44,7 @@ const OrderC = ({ orden }) => {
     loading: loadingI,
     error: errorI,
     data: dataI,
-  } = useQuery(GET_ITEM, {
+  } = useQuery(GET_ARTICULO, {
     variables: {
       orden: id,
     },

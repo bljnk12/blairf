@@ -59,7 +59,7 @@ export default function Confirm() {
 
   const [id, setId] = useState();
 
-  const GET_ITEM = gql`
+  const GET_ARTICULO = gql`
     query GetItems($orden: ID!) {
       articulo(orden: $orden) {
         id
@@ -80,7 +80,7 @@ export default function Confirm() {
     loading: loadingI,
     error: errorI,
     data: dataI,
-  } = useQuery(GET_ITEM, {
+  } = useQuery(GET_ARTICULO, {
     variables: {
       orden: id,
     },
