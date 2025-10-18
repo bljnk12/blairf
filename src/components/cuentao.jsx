@@ -15,9 +15,12 @@ export default function MisOrdenes() {
     query GetOrdenes($cliente: ID!) {
       orden(cliente: $cliente) {
         id
-        dia
+        clienteNombre
         total
+        dia
         factura
+        direccionEnvio
+        confirmada
       }
     }
   `;

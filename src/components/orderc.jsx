@@ -92,7 +92,7 @@ const OrderC = ({ orden }) => {
     doc.text(`Fecha: ${fecha} `, 10, 30);
     doc.text("Blairfoods", 10, 40);
     doc.text("billing@blairfoods.com", 10, 47);
-    doc.text(`Orden id: ${ordenId} `, 10, 57);
+    doc.text(`Orden id: ${id} `, 10, 57);
     doc.text(`Cliente: ${clienteNombre} `, 10, 64);
     doc.text(`Dirección: ${direccionEnvio} `, 10, 71);
     doc.text(`Total: $${total} `, 10, 78);

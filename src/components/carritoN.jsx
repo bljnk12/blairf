@@ -77,7 +77,7 @@ export default function CartN() {
   const usuario = dataU?.usuario;
 
   const GET_DIRECCION = gql`
-    query GetDireccion($cliente: ID!) {
+    query GetDirecciones($cliente: ID!) {
       direccion(cliente: $cliente) {
         id
         calle
@@ -188,7 +188,7 @@ export default function CartN() {
     }
 
     const orderPayload = {
-      cliente: user?.user_id,
+      cliente: usuarioId,
       clienteNombre: usuario?.username,
       productos: "ver productos",
       total: newTotal,

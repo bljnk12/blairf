@@ -163,7 +163,7 @@ export default function PersonalInfo() {
   };
 
   const GET_DIRECCION = gql`
-    query GetDireccion($cliente: ID!) {
+    query GetDirecciones($cliente: ID!) {
       direccion(cliente: $cliente) {
         id
         calle
@@ -246,31 +246,43 @@ export default function PersonalInfo() {
   const [
     createDireccion,
     { data: dataNewDir, loading: loadingNewDir, error: errorNewDir },
-  ] = useMutation(CREATE_DIRECCION, {
-    update(
-      cache,
-      {
-        data: {
-          createDireccion: { direccion: nuevaDireccion },
+  ] = useMutation(
+    CREATE_DIRECCION,
+    {
+      refetchQueries: [
+        {
+          query: GET_DIRECCION,
+          variables: { cliente: usuarioId },
         },
-      }
-    ) {
-      const existingDirecciones = cache.readQuery({
-        query: GET_DIRECCION,
-        variables: { cliente: usuario },
-      });
-
-      if (existingDirecciones && nuevaDireccion) {
-        cache.writeQuery({
+        "GetDirecciones",
+      ],
+    },
+    {
+      update(
+        cache,
+        {
+          data: {
+            createDireccion: { direccion: nuevaDireccion },
+          },
+        }
+      ) {
+        const existingDirecciones = cache.readQuery({
           query: GET_DIRECCION,
           variables: { cliente: usuario },
-          data: {
-            direccion: [...existingDirecciones.direccion, nuevaDireccion],
-          },
         });
-      }
-    },
-  });
+
+        if (existingDirecciones && nuevaDireccion) {
+          cache.writeQuery({
+            query: GET_DIRECCION,
+            variables: { cliente: usuario },
+            data: {
+              direccion: [...existingDirecciones.direccion, nuevaDireccion],
+            },
+          });
+        }
+      },
+    }
+  );
 
   const handleSubmitCreateDir = async () => {
     if (user) {

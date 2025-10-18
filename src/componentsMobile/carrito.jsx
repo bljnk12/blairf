@@ -44,7 +44,7 @@ const Cart = ({ close, gotoconf }) => {
   const usuario = dataU?.usuario;
 
   const GET_DIRECCION = gql`
-    query GetDireccion($cliente: ID!) {
+    query GetDirecciones($cliente: ID!) {
       direccion(cliente: $cliente) {
         id
         calle

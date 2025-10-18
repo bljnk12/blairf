@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect, useRef } from "react";
+import React, { useState, useContext, useEffect, useRef, use } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "./media/fulllogo_transparent.png";
 import { CartContext } from "./CartContext";
@@ -9,7 +9,7 @@ import OrderCC from "./ordercc";
 import ItemCAI from "./itemCaI";
 import ItemCAA from "./itemCaa";
 import { gql } from "@apollo/client";
-import { useQuery } from "@apollo/client/react";
+import { useQuery, useMutation } from "@apollo/client/react";
 
 export default function Confirm() {
   const { user } = useContext(AuthContext);
@@ -38,9 +38,9 @@ export default function Confirm() {
     query GetOrdenes($cliente: ID!) {
       orden(cliente: $cliente) {
         id
-        dia
         total
-        factura
+        dia
+        confirmada
       }
     }
   `;
@@ -56,6 +56,15 @@ export default function Confirm() {
   });
 
   const ordenes = dataO?.orden;
+
+  const [ordenesF, setOrdenesF] = useState([]);
+
+  useEffect(() => {
+    const ordenesFiltradas = ordenes?.filter(
+      (orden) => orden.confirmada === false
+    );
+    setOrdenesF(ordenesFiltradas);
+  }, [ordenes]);
 
   const [id, setId] = useState();
 
@@ -143,19 +152,83 @@ export default function Confirm() {
     scroll2();
   };
 
-  const confirm = {
-    confirmada: true,
+  const UPDATE_ORDEN = gql`
+    mutation updateOrden($id: ID!, $confirmada: Boolean) {
+      updateOrden(id: $id, confirmada: $confirmada) {
+        orden {
+          id
+          confirmada
+        }
+      }
+    }
+  `;
+
+  const [updateOrden, { data: dataUO, loading: loadingUO, error: errorUO }] =
+    useMutation(UPDATE_ORDEN, {
+      refetchQueries: [
+        {
+          query: GET_ORDEN,
+          variables: { cliente: usuarioId },
+        },
+        "GetOrdenes",
+      ],
+    });
+
+  const handleSubmitUpdateOrden = async () => {
+    if (user) {
+      try {
+        const result = await updateOrden({
+          variables: {
+            id: parseInt(id),
+            confirmada: true,
+          },
+        });
+        scroll1();
+      } catch (e) {
+        // The 400 Bad Request error will be caught here!
+        //console.error(e);
+      }
+    } else {
+      alert("Inicia sesión por favor!");
+    }
   };
 
-  let confirmOrder = async () => {
-    fetch(`http://localhost:8000/blairfoodsb/orden/${id}/`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(confirm),
+  const DELETE_ORDEN = gql`
+    mutation EliminarOrden($id: ID!) {
+      deleteOrden(id: $id) {
+        message
+      }
+    }
+  `;
+
+  const [deleteOrden, { data: dataDO, loading: loadingDO, error: errorDO }] =
+    useMutation(DELETE_ORDEN, {
+      refetchQueries: [
+        {
+          query: GET_ORDEN,
+          variables: { cliente: usuarioId },
+        },
+        "GetOrdenes",
+      ],
     });
-    scroll1();
+
+  const handleSubmitDeleteOrden = async () => {
+    if (user) {
+      try {
+        const result = await deleteOrden({
+          variables: {
+            id: parseInt(id),
+          },
+        });
+        //console.log(result);
+        showEliminar();
+        scroll1();
+      } catch (e) {
+        console.error(e);
+      }
+    } else {
+      alert("Inicia sesión por favor!");
+    }
   };
 
   const [eliminar, setEliminar] = useState(false);
@@ -164,20 +237,8 @@ export default function Confirm() {
     setEliminar(!eliminar);
   };
 
-  let deleteOrder = async () => {
-    fetch(`http://localhost:8000/blairfoodsb/orden/${id}/`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    showEliminar();
-    scroll1();
-  };
-
   const showData = () => {
-    showTotalIni();
-    showTotalAct();
+    console.log(dataO);
   };
 
   return (
@@ -311,7 +372,7 @@ export default function Confirm() {
                       </div>
                     ) : (
                       <>
-                        {ordenes?.map((orden) => {
+                        {ordenesF?.map((orden) => {
                           return (
                             <OrderCC
                               orden={orden}
@@ -370,7 +431,10 @@ export default function Confirm() {
                   <button className="colocar-btn" onClick={showEliminar}>
                     Cancelar orden
                   </button>
-                  <button className="colocar-btn" onClick={confirmOrder}>
+                  <button
+                    className="colocar-btn"
+                    onClick={handleSubmitUpdateOrden}
+                  >
                     Confirmar orden
                   </button>
                 </div>
@@ -383,7 +447,10 @@ export default function Confirm() {
           <div className="advice-cont">
             <div className="advice-del-msn">
               <div>Estas seguro que deseas eliminar la orden?</div>
-              <button className="advice-del-confirm" onClick={deleteOrder}>
+              <button
+                className="advice-del-confirm"
+                onClick={handleSubmitDeleteOrden}
+              >
                 Si
               </button>
               <button className="advice-del-cancel" onClick={showEliminar}>
