@@ -17,7 +17,6 @@ const OrderPA = ({ orden }) => {
     pago,
     factura,
     direccionEnvio,
-    estatus,
     completa,
   } = orden;
 
@@ -114,7 +113,6 @@ const OrderPA = ({ orden }) => {
     doc.text(`Cliente: ${clienteNombre} `, 10, 64);
     doc.text(`Dirección: ${direccionEnvio} `, 10, 71);
     doc.text(`Total: $${total} `, 10, 78);
-    doc.text(`Estatus: ${estatus} `, 10, 85);
     doc.text("Articulos", 95, 95);
     doc.autoTable({
       theme: "striped",
